@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>家装全流程参谋 · 菜单式交互手册</title>
+<style>
+  :root{
+    --bg:#f3f5f7;
+    --paper:#ffffff;
+    --ink:#16273b;
+    --muted:#6a7787;
+    --line:#e1e6ec;
+    --accent:#e07b39;
+    --accent-soft:#f2c9a6;
+    --accent2:#1e3a5f;
+    --warn:#c0392b;
+    --side:#f7f9fb;
+    --side2:#ebf0f6;
+    --side-text:#4a5a6c;
+    --shadow:0 1px 2px rgba(22,39,59,.05),0 10px 30px rgba(22,39,59,.07);
+    --radius:16px;
+    --sb-w:266px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;
+    line-height:1.65;font-size:15px;overflow:hidden;}
+  h1,h2,h3,h4{font-family:"Songti SC","STSong","Noto Serif SC",Georgia,serif;font-weight:700;letter-spacing:.4px;margin:0;}
+  ::-webkit-scrollbar{width:9px;height:9px;}
+  ::-webkit-scrollbar-thumb{background:#dce2e8;border-radius:9px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  /* ===== 应用外壳 ===== */
+  .app{display:flex;height:100vh;}
+
+  /* 侧边菜单 */
+  .sidebar{width:var(--sb-w);flex:0 0 var(--sb-w);background:linear-gradient(180deg,#f7f9fb,#ebf0f6);
+    color:var(--side-text);display:flex;flex-direction:column;transition:width .25s ease;overflow:hidden;border-right:1px solid var(--line);}
+  .sidebar.collapsed{width:74px;}
+  .brand{display:flex;align-items:center;gap:12px;padding:22px 22px 18px;cursor:default;}
+  .brand .logo{width:44px;height:44px;flex:0 0 44px;border-radius:12px;background:linear-gradient(135deg,#16324f,#1e3a5f);
+    display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 4px 14px rgba(224,123,57,.32);}
+  .brand .logo img{width:100%;height:100%;object-fit:contain;padding:4px;display:block;}
+  .brand .txt b{display:block;color:var(--ink);font-family:"Songti SC",serif;font-size:16px;letter-spacing:1px;}
+  .brand .txt span{font-size:11px;color:#8a98a8;letter-spacing:2px;text-transform:uppercase;}
+  .sidebar.collapsed .brand .txt,.sidebar.collapsed .mgroup,.sidebar.collapsed .mi label{display:none;}
+
+  .menu{flex:1;overflow-y:auto;padding:6px 12px 20px;}
+  .mgroup{font-size:10.5px;letter-spacing:3px;color:#7a8797;padding:16px 12px 8px;text-transform:uppercase;}
+  .mi{display:flex;align-items:center;gap:13px;padding:10px 12px;border-radius:10px;cursor:pointer;color:var(--side-text);
+    transition:background .15s,color .15s;position:relative;margin:2px 0;white-space:nowrap;}
+  .mi:hover{background:rgba(224,123,57,.10);color:var(--ink);}
+  .mi.active{background:linear-gradient(90deg,rgba(224,123,57,.26),rgba(224,123,57,.06));color:var(--ink);}
+  .mi.active::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:3px;background:var(--accent-soft);}
+  .mi .ic{width:22px;flex:0 0 22px;text-align:center;font-size:16px;}
+  .mi .num{font-family:"Songti SC",serif;font-size:13px;color:var(--accent-soft);width:20px;}
+  .mi label{cursor:pointer;font-size:14px;}
+
+  .side-foot{padding:14px 18px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px;}
+  .collapse-btn{background:rgba(224,123,57,.12);border:none;color:var(--ink);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:15px;}
+  .collapse-btn:hover{background:rgba(224,123,57,.24);color:var(--ink);}
+
+  /* 主区 */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg);}
+  .topbar{height:64px;flex:0 0 64px;display:flex;align-items:center;gap:18px;padding:0 30px;
+    background:rgba(255,255,255,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+  .crumb{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted);}
+  .crumb b{color:var(--ink);font-family:"Songti SC",serif;font-size:16px;}
+  .search{margin-left:auto;position:relative;width:360px;max-width:42vw;}
+  .search input{width:100%;padding:9px 14px 9px 36px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:13.5px;outline:none;transition:.2s;}
+  .search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(224,123,57,.12);}
+  .search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;fill:var(--muted);}
+  .topbar .printhint{font-size:12px;color:var(--muted);white-space:nowrap;}
+
+  .content{flex:1;overflow-y:auto;padding:34px 40px 70px;}
+  .view{display:none;animation:fade .35s ease;}
+  .view.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  /* ===== 总览 ===== */
+  .ov-hero{background:linear-gradient(120deg,#122a45,#1e3a5f 58%,#c25e2b);border-radius:20px;color:#f4f8fc;padding:38px 40px;position:relative;overflow:hidden;margin-bottom:26px;border:1px solid #2a4a72;}
+  .ov-hero::after{content:"";position:absolute;right:-50px;top:-50px;width:220px;height:220px;border:1px solid rgba(242,201,166,.32);border-radius:50%;}
+  .ov-hero .kick{font-size:11px;letter-spacing:4px;color:#ffcf9e;text-transform:uppercase;margin-bottom:12px;}
+  .ov-hero h1{font-size:32px;color:#ffffff;margin-bottom:10px;}
+  .ov-hero p{margin:0;max-width:640px;color:rgba(232,240,248,.86);font-size:14px;line-height:1.85;}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:30px;}
+  .stat{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow);}
+  .stat .n{font-family:"Songti SC",serif;font-size:34px;color:var(--accent);line-height:1;}
+  .stat .l{font-size:13px;color:var(--muted);margin-top:8px;}
+  .stat .s{font-size:11px;color:var(--accent2);margin-top:4px;}
+  .sec-title{font-family:"Songti SC",serif;font-size:20px;margin:6px 0 16px;display:flex;align-items:center;gap:10px;color:var(--ink);}
+  .sec-title .bar{width:4px;height:20px;background:var(--accent);border-radius:3px;}
+  .stage-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .scard{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:20px;cursor:pointer;box-shadow:var(--shadow);transition:transform .18s,box-shadow .18s,border-color .18s;position:relative;overflow:hidden;}
+  .scard:hover{transform:translateY(-3px);box-shadow:0 14px 34px rgba(22,39,59,.12);border-color:var(--accent-soft);}
+  .scard .top{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .scard .badge{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#eef3f8,#dce5ee);display:flex;align-items:center;justify-content:center;font-size:20px;}
+  .scard .no{font-family:"Songti SC",serif;font-size:13px;color:var(--accent);}
+  .scard h3{font-size:17px;margin:0;}
+  .scard .tag{font-size:11px;color:var(--muted);background:#eef2f7;padding:3px 10px;border-radius:999px;display:inline-block;margin-top:10px;}
+  .scard .arrow{position:absolute;right:18px;bottom:16px;color:var(--accent-soft);font-size:18px;opacity:0;transition:.18s;}
+  .scard:hover .arrow{opacity:1;}
+
+  /* ===== 阶段视图 ===== */
+  .vhead{display:flex;align-items:flex-end;gap:16px;border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:6px;}
+  .vhead .num{font-family:"Songti SC",serif;font-size:40px;color:var(--accent);line-height:.9;}
+  .vhead h2{font-size:27px;}
+  .vhead .tag{margin-left:auto;font-size:12px;color:var(--muted);background:#e6ecf3;padding:5px 13px;border-radius:999px;}
+  .vsum{color:var(--muted);font-size:14px;margin:16px 0 24px;padding-left:2px;max-width:760px;}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:22px;}
+  .panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow);}
+  .panel h3{font-size:16px;display:flex;align-items:center;gap:9px;margin-bottom:14px;color:var(--ink);}
+  .panel h3 .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);}
+  .panel h3.warn .dot{background:var(--warn);}
+  ul.lst{margin:0;padding:0;list-style:none;}
+  ul.lst li{position:relative;padding:8px 0 8px 22px;border-bottom:1px dashed var(--line);font-size:14px;}
+  ul.lst li:last-child{border-bottom:none;}
+  ul.lst li::before{content:"";position:absolute;left:3px;top:15px;width:7px;height:7px;border:1.5px solid var(--accent);transform:rotate(45deg);}
+  ul.lst.warn li::before{border-color:var(--warn);}
+
+  .prod-wrap{margin-top:8px;}
+  .prod-wrap > h3{font-size:18px;display:flex;align-items:center;gap:10px;margin:4px 0 16px;color:var(--ink);}
+  .prod-wrap > h3 .bar{width:4px;height:20px;background:var(--accent);border-radius:3px;}
+  .prod-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+  .prod{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);}
+  .prod .ph{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+  .prod .cat{font-size:11px;letter-spacing:1px;color:#fff;background:var(--accent2);padding:2px 9px;border-radius:6px;}
+  .prod h4{font-size:16.5px;margin:0;color:var(--ink);}
+  .prod .note{font-size:13px;color:var(--muted);margin:8px 0 12px;}
+  table.param{width:100%;border-collapse:collapse;font-size:13px;}
+  table.param th{text-align:left;width:36%;color:var(--muted);font-weight:600;padding:6px 8px 6px 0;border-bottom:1px solid var(--line);vertical-align:top;}
+  table.param td{padding:6px 0;border-bottom:1px solid var(--line);}
+  table.param tr:last-child th,table.param tr:last-child td{border-bottom:none;}
+
+  /* 参照图 */
+  .prod .ref{margin:2px 0 13px;background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:10px 12px 7px;}
+  .prod .ref svg{width:100%;height:auto;display:block;}
+  .prod .ref .cap{font-size:11.5px;color:var(--muted);text-align:center;margin-top:7px;}
+  .style .scene{height:120px;position:relative;overflow:hidden;background:#eaf0f6;}
+  .style .scene svg{width:100%;height:100%;display:block;}
+
+  /* ===== 风格 ===== */
+  .style-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
+  .style{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
+  .style .bar{height:9px;background:linear-gradient(90deg,var(--c1),var(--c2));}
+  .style .body{padding:20px 22px;}
+  .style h4{font-size:19px;}
+  .style .en{font-size:11px;color:var(--muted);letter-spacing:1.5px;margin:2px 0 12px;}
+  .style p{font-size:13.5px;color:var(--muted);margin:0 0 12px;}
+  .style .row{display:flex;gap:7px;flex-wrap:wrap;margin:9px 0;}
+  .style .chip{font-size:12px;background:#eef2f7;color:#4a5a6c;padding:3px 10px;border-radius:6px;}
+  .style .chip.g{background:#eef3f8;color:var(--accent2);}
+  .style .cost{font-size:13px;color:var(--accent2);font-weight:600;margin-top:10px;}
+
+  /* ===== 索引 ===== */
+  .idx-tools{display:flex;gap:10px;margin-bottom:14px;align-items:center;}
+  .idx-tools select{padding:7px 12px;border:1px solid var(--line);border-radius:9px;background:#fff;font-size:13px;color:var(--ink);}
+  .idx-wrap{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
+  table.idx{width:100%;border-collapse:collapse;font-size:13.5px;}
+  table.idx th,table.idx td{padding:11px 16px;text-align:left;border-bottom:1px solid var(--line);}
+  table.idx th{background:#eaf0f6;color:var(--muted);font-weight:600;cursor:pointer;position:sticky;top:0;user-select:none;}
+  table.idx th:hover{color:var(--accent);}
+  table.idx tr{cursor:pointer;}
+  table.idx tr:hover td{background:#f8fafc;}
+  .idx-empty{padding:40px;text-align:center;color:var(--muted);}
+  .pill{font-size:11px;background:#e6ecf3;color:#5f6b78;padding:2px 9px;border-radius:999px;}
+
+  /* ===== 搜索结果 ===== */
+  .res-head{font-size:14px;color:var(--muted);margin-bottom:16px;}
+  .res-head b{color:var(--accent);}
+  .res-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  .res{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;box-shadow:var(--shadow);transition:.15s;}
+  .res:hover{border-color:var(--accent-soft);transform:translateY(-2px);}
+  .res .meta{font-size:11px;color:var(--muted);margin-bottom:4px;}
+  .res h4{font-size:15px;}
+  .res .kk{font-size:12.5px;color:var(--muted);margin-top:6px;}
+
+  /* 抽屉开关（移动端） */
+  .menu-toggle{display:none;align-items:center;justify-content:center;width:40px;height:40px;flex:0 0 40px;border:none;background:rgba(224,123,57,.14);border-radius:10px;cursor:pointer;font-size:18px;color:var(--ink);}
+  .menu-toggle:hover{background:rgba(224,123,57,.26);}
+  .backdrop{display:none;position:fixed;inset:0;background:rgba(16,32,48,.42);z-index:55;}
+  @media(max-width:1080px){.stats{grid-template-columns:repeat(2,1fr);}.stage-cards{grid-template-columns:repeat(2,1fr);}.cols,.prod-grid,.style-grid,.res-grid{grid-template-columns:1fr;}}
+  @media(max-width:760px){
+    .app{height:100vh;height:100dvh;}
+    .menu-toggle{display:flex;}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:60;height:100%;transform:translateX(-100%);transition:transform .25s ease;box-shadow:0 0 40px rgba(22,39,59,.28);}
+    .sidebar.open{transform:translateX(0);}
+    .backdrop.show{display:block;}
+    .topbar{height:56px;flex:0 0 56px;padding:0 14px;gap:12px;}
+    .search{width:150px;}
+    .topbar .printhint{display:none;}
+    .content{padding:22px 16px 50px;}
+  }
+  @media print{.sidebar,.topbar,.ov-hero::after{display:none!important;}body{overflow:auto;}.view{display:block!important;animation:none;}#view-overview,#view-index,#view-styles{display:none!important;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- 侧边菜单 -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="logo"><img src="data:image/png;base64,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" alt="侯哥图腾"></div>
+      <div class="txt"><b>家装参谋</b><span>FIELD MANUAL</span></div>
+    </div>
+    <nav class="menu" id="menu">
+      <div class="mgroup">导航</div>
+      <div class="mi" data-view="overview"><span class="ic">🏠</span><label>总览看板</label></div>
+      <div class="mgroup">装修全流程 · 9 站</div>
+      <!-- 阶段菜单由JS注入 -->
+      <div class="mgroup">速查 & 风格</div>
+      <div class="mi" data-view="index"><span class="ic">⚑</span><label>产品参数速查</label></div>
+      <div class="mi" data-view="styles"><span class="ic">❖</span><label>装修风格库</label></div>
+    </nav>
+    <div class="side-foot">
+      <button class="collapse-btn" id="collapseBtn" title="收起菜单">‹</button>
+      <span>离线可用 · 可打印</span>
+    </div>
+  </aside>
+
+  <!-- 主区 -->
+  <div class="main">
+    <div class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="打开菜单">☰</button>
+      <div class="crumb"><span id="crumbIcon">🏠</span><b id="crumbTitle">总览看板</b></div>
+      <div class="search">
+        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1114 9.5 4.5 4.5 0 019.5 14z"/></svg>
+        <input id="searchBox" type="text" placeholder="搜产品/参数：电线、坑距、插座高度、乳胶漆…" autocomplete="off">
+      </div>
+      <span class="printhint">Ctrl/Cmd+P 存 PDF</span>
+    </div>
+    <div class="content" id="content">
+
+      <!-- 总览 -->
+      <section class="view active" id="view-overview">
+        <div class="ov-hero">
+          <div class="kick">HOME RENOVATION FIELD MANUAL</div>
+          <h1>家装全流程参谋</h1>
+          <p>拆改到入住，9 站逐点拆解：每站「做什么 · 避什么坑 · 订买什么 · 具体参数」。电线水管、开关插座高度、马桶橱柜衣柜尺寸、电器家具大小、涂料美缝、八种主流风格——菜单点选，一本通查。新房旧房通用。</p>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="n">9</div><div class="l">装修阶段</div><div class="s">拆改 → 入住</div></div>
+          <div class="stat"><div class="n" id="statProd">—</div><div class="l">产品参数</div><div class="s">带具体规格</div></div>
+          <div class="stat"><div class="n">8</div><div class="l">装修风格</div><div class="s">配色·造价</div></div>
+          <div class="stat"><div class="n">2</div><div class="l">适用场景</div><div class="s">新房 / 旧房</div></div>
+        </div>
+        <div class="sec-title"><span class="bar"></span>全流程地图 · 点卡片进入</div>
+        <div class="stage-cards" id="stageCards"></div>
+      </section>
+
+      <!-- 阶段视图由JS注入 -->
+      <!-- 索引 -->
+      <section class="view" id="view-index">
+        <div class="vhead"><span class="num">⚑</span><h2>产品参数速查</h2><span class="tag">全本索引</span></div>
+        <div class="vsum">点表头排序；下拉可按阶段筛选；配合顶部搜索框即时过滤。每行可点，直达对应阶段。</div>
+        <div class="idx-tools">
+          <select id="idxFilter"><option value="">全部阶段</option></select>
+        </div>
+        <div class="idx-wrap">
+          <table class="idx"><thead><tr>
+            <th data-k="stage">阶段 ⇅</th><th data-k="name">产品 ⇅</th><th data-k="cat">类别 ⇅</th><th data-k="key">关键参数 ⇅</th>
+          </tr></thead><tbody id="idxBody"></tbody></table>
+          <div class="idx-empty" id="idxEmpty" style="display:none">没有匹配项，换个关键词。</div>
+        </div>
+      </section>
+
+      <!-- 风格 -->
+      <section class="view" id="view-styles">
+        <div class="vhead"><span class="num">❖</span><h2>装修风格库</h2><span class="tag">8 种主流</span></div>
+        <div class="vsum">每种风格给配色、主材、代表元素、适合人群与造价区间。旧房选风格时注意层高、采光与原有结构是否吃得下（法式/美式对层高面积要求高）。</div>
+        <div class="style-grid" id="styleGrid"></div>
+      </section>
+
+      <!-- 搜索结果 -->
+      <section class="view" id="view-search">
+        <div class="vhead"><span class="num">⌕</span><h2>搜索结果</h2><span class="tag" id="resCount"></span></div>
+        <div class="res-head" id="resHead"></div>
+        <div class="res-grid" id="resGrid"></div>
+      </section>
+
+    </div>
+  </div>
+</div>
+<div class="backdrop" id="backdrop"></div>
+
+<script>
+/* ============== 数据 ============== */
+const STAGES = [
+  {id:"s1", num:"01", name:"量房 · 设计 · 规划", tag:"开工前 1–4 周", icon:"📐",
+    sum:"所有麻烦的源头都在这一步没做透。量准、想清动线、定好风格与预算，后面才不会反复拆改返工。",
+    tasks:["精确量房：净尺寸、层高、梁柱、管道、承重墙、门窗洞口、原水电点位全部标注。","需求访谈：常住人数、年龄结构、生活习惯、储物量、电器清单。","平面布局：确定功能、动线、家具大致尺寸与摆放。","确定风格与色彩基调（见风格库），出具效果图/施工图。","编制预算表与采购清单（主材/辅材/家具家电分档）。","确认物业装修规定（施工时间、垃圾点、封窗/拆改限制）。"],
+    pitfalls:["只看建筑面积不看净尺寸，柜体家具进场放不下。","没提前定电器型号尺寸，橱柜水电点位错位（嵌入式冰箱/洗碗机/烟机）。","承重墙、剪力墙、配重墙错当可拆墙——结构安全红线，绝不碰。","预算只算硬装不算家具软装，入住前发现没钱买。","旧房未做房屋体检（漏水/空鼓/老电路）就直接设计。"],
+    products:[
+      {name:"激光测距仪",cat:"量房工具",note:"比卷尺快且准，量房必备。",params:[["量程","40–120 m"],["精度","±1.5 mm"],["建议","40m 够用，大户型选 60–120m"]]},
+      {name:"设计软件",cat:"设计工具",note:"画平面、出效果图。",params:[["常用","酷家乐/三维家/CAD/SketchUp"],["产出","平面图、水电位图、效果图"]]},
+      {name:"需求与预算表",cat:"规划文档",note:"把模糊想法变成可执行清单。",params:[["分档","硬装/主材/家具/家电/软装 五栏"],["原则","预留 10–15% 不可预见费"]]},
+      {name:"风格定位卡",cat:"设计决策",note:"锁定基调，避免买乱。",params:[["维度","色彩/材质/元素/造价"],["参考","本手册风格库 8 种"]]}
+    ]},
+  {id:"s2", num:"02", name:"主体拆改", tag:"开工第 1 周", icon:"🔨",
+    sum:"拆不是乱砸。先交底、后放线、再动手，垃圾及时清运，新旧墙交接处做挂网防开裂。",
+    tasks:["现场交底：设计/工长/业主三方确认拆改范围与保留项。","放线定位：要拆的墙、新砌的墙、门洞尺寸用墨线标清。","保护性拆除：先断水断电，门窗地漏下水管口封堵保护。","新砌墙：轻质砖，新旧墙交接植筋+挂钢丝网。","门洞窗洞按定制尺寸预留。","拆改垃圾装袋清运至物业指定点。"],
+    pitfalls:["误拆承重墙/剪力墙/配重墙——严禁，结构安全红线。","拆改前未封下水管口，水泥块掉进去后期堵塞。","门洞留小成品门装不上，留大难收口。","新砌墙不植筋不挂网，后期必开裂。","旧房铲墙皮不到位，新腻子起皮脱落。"],
+    products:[
+      {name:"轻质砖/加气砌块",cat:"砌体",note:"新砌隔墙首选，轻且隔音尚可。",params:[["规格","600×200×100 / 600×200×200 mm"],["容重","≤700 kg/m³ 为佳"],["配套","砌筑砂浆、界面剂"]]},
+      {name:"界面剂(墙固)",cat:"辅材",note:"新旧墙、铲墙后滚涂增强附着力。",params:[["类型","水性环氧/丙烯酸"],["用量","约 10–12 ㎡/kg"],["作用","封闭浮灰、防起砂"]]},
+      {name:"钢丝网/网格布",cat:"防裂",note:"新旧墙交接、开槽处挂网。",params:[["规格","0.8–1.2mm 钢丝网 或 耐碱玻纤网"],["宽","≥200mm 搭接"]]},
+      {name:"成品保护膜",cat:"保护",note:"保护地面门窗与管口。",params:[["材质","PVC 加棉/编织布"],["管口塞","专用下水管防堵盖"]]}
+    ]},
+  {id:"s3", num:"03", name:"水电改造（隐蔽工程）", tag:"拆改后 1–2 周", icon:"⚡",
+    sum:"家装里最不能省、最怕返工的一步。点位宁多勿少，回路设计合理，活线工艺方便维修。所有参数务必现场交底。",
+    tasks:["出水电图：插座/开关/灯位/给排水/网络电视点位逐一定位。","开槽：墙横槽≤50cm，承重墙尽量走地/顶。","布管穿线：强电横平竖直，强弱电交叉包锡纸防干扰。","水管热熔，左热右冷、上热下冷，打压 0.8MPa 30 分钟压降≤0.05。","配电箱回路规划、漏保空开配置。","验收拍照留存，封槽前点位摄像，方便后期打孔避管。"],
+    pitfalls:["插座不够，满地插线板——厨房/电视墙/书桌/床头最易缺。","电线平方选小：即热热水器/中央空调用 2.5 平方会烧线。","强弱电同管同槽不屏蔽，网络电视受干扰。","水管未打压或打压不规范，入住后漏水殃及楼下。","水路未做左热右冷，花洒龙头装反。","水电走地后瓷砖开孔打穿管线——务必留图。"],
+    products:[
+      {name:"BV 铜芯电线",cat:"强电",note:"家装主线，单股硬线易施工寿命长。",params:[["照明/普通插座","2.5 mm²"],["厨房/卫生间/空调挂机","4 mm²"],["即热热水器/中央空调/进户","6 mm²"],["进户总线","10 mm²"],["配色","火线红、零线蓝、地线黄绿双色"],["品牌","熊猫/远东/德力西/昆仑"]]},
+      {name:"PVC 穿线管",cat:"强电",note:"阻燃，线管截面积占用≤40%。",params:[["规格","Φ16 / Φ20 mm"],["特性","阻燃、冷弯型"],["要求","活线工艺，单管≤3 根"]]},
+      {name:"PPR 给水管",cat:"水工",note:"热熔连接，分冷热水管。",params:[["管径","20mm(4分)/25mm(6分)/32mm(1寸)"],["热水管","S3.2 或 S2.5（壁更厚）"],["冷水管","S5 / S4"],["布置","左热右冷、上热下冷"],["品牌","伟星/日丰/金德/保利"]]},
+      {name:"配电箱及漏保空开",cat:"强电",note:"回路设计核心，安全底线。",params:[["总开","2P 63A 漏保"],["照明","1P 16A"],["普通插座","1P+N 漏保 20–25A"],["厨房","2P 32A"],["卫生间","2P 25A"],["空调","各 1P 25A 独立回路"]]},
+      {name:"超六类网线",cat:"弱电",note:"家用超六类足够跑满千兆/万兆。",params:[["型号","Cat6A（或 Cat7）"],["敷设","单独穿管，与强电间距≥30cm"],["点位","每房间留网络+电视"]]},
+      {name:"86 型暗盒/底盒",cat:"电工",note:"所有开关插座预埋盒。",params:[["规格","86×86 mm"],["材质","PVC 阻燃"],["要求","同位点平齐、深度一致"]]},
+      {name:"开关插座高度速查",cat:"点位",note:"距地净高通用值，按家人身高微调。",params:[["普通插座","30 cm"],["电视墙","30 cm（挂电视预埋 Φ50 管）"],["厨房台面","距台面 15–20 cm（约 110–120 cm）"],["床头插座","70 cm（床头柜上方）"],["空调挂机","200–220 cm；柜机 30 cm"],["开关面板","130–140 cm"],["洗衣机","120 cm"],["热水器","180 cm"],["马桶旁(智能盖)","30 cm（带防溅盒）"],["镜前/剃须","130–150 cm"]]},
+      {name:"回路规划清单",cat:"设计",note:"避免一个回路带全屋。",params:[["建议回路","照明1/客餐厅插座1/厨房1/卫生间1/空调各1/冰箱独立1（出差不断电）"]]},
+      {name:"智能开关零火预留",cat:"智能",note:"零火版智能开关 + 无线场景开关，弃用单火/凌动。",params:[["方案","零火版智能开关（墙内零火地三线）+ 无线场景开关（免布线）"],["底盒要求","每个开关/情景位 86 盒内必留零线 N（与照明同 2.5mm²）"],["老房改零","借原双控线其中一根作零线，或就近从灯位引零线"],["灯具","用普通灯，不绑死智能灯，平台可统一控制"],["禁忌","勿用单火/凌动自回弹方案（已弃用）"]]},
+      {name:"弱电箱与网络汇聚",cat:"智能",note:"全屋智能的大脑房，必须留电扩容。",params:[["弱电箱","≥400×300mm，带散热，预留 2–3 个 86 电源"],["入户","光纤 + 各房间超六类网线在此汇聚"],["设备","光猫/路由器/POE 交换机电源与散热预留"],["回程","客厅电视墙留网口做 AP 回程/有线回传"]]},
+      {name:"全屋智能点位总览",cat:"智能",note:"各房间智能设备电源/网口预留一览。",params:[["入户","智能门锁(电池免布)/中控屏零火位"],["客厅","电视墙 2–3 网口、吸顶 AP 网线(PoE)、窗帘电机 220V、情景面板"],["卧室","网口 1、窗帘电机 220V、人体存在传感器(电池)"],["厨房","燃气报警器 220V(距顶30cm)、烟机联动"],["卫生间","智能镜/除雾零火、水浸(电池)、洗手液机"],["阳台","电动晾衣架 220V(天花)、摄像头网口+电源"]]},
+      {name:"窗帘电机/智能镜/晾衣架电源",cat:"智能",note:"木工吊顶前必须预留，错过难补。",params:[["窗帘电机","窗帘盒内/侧预留 220V，高度距顶 10–15cm，电机侧留"],["智能镜","镜柜后留零火(除雾/背光)，高度 130–150cm"],["晾衣架","阳台天花预留 220V，居中偏一侧"],["配合","与吊顶/窗帘盒木工同步交底"]]},
+      {name:"传感器与安防点位",cat:"智能",note:"多数电池供电免布线，标出需留电处。",params:[["人体存在/毫米波","吸顶或墙面，优先电池款；吸顶款可留零火"],["燃气报警","厨房留 220V，距顶 30cm 或距地 150cm"],["水浸","厨卫/机房地面附近，电池款贴地"],["烟感","各层天花，电池款"],["摄像头","室外/入户留网口+电源，室内留电源"]]},
+      {name:"暖通与背景音乐控制线",cat:"智能",note:"中央空调/新风/地暖/影音提前留线。",params:[["空调/新风/地暖","主机位留零火+网线，控制线/485 到面板"],["背景音乐","主机位留电源，各房间留音箱线或无源网线供电"],["影音","电视墙预埋 HDMI 管(Φ50)、音响线、留网口"]]}
+    ]},
+  {id:"s4", num:"04", name:"防水 · 泥瓦工程", tag:"水电后 1–2 周", icon:"💧",
+    sum:"防水做不好，楼下找上门。闭水试验不能省。贴砖讲究排版对缝留缝，美缝最后收口。",
+    tasks:["基层处理：地面找平、管根阴角做圆弧、清浮灰。","涂刷防水：卫生间满刷，淋浴区墙≥1.8m、其他≥30cm；厨房地面+墙 30cm；阳台有水路处刷。","门槛石处做挡水坝防外溢。","闭水试验：蓄水 2–3cm，48 小时楼下无渗漏。","瓷砖排版图：出铺贴图，对缝起铺点拼花收边先定。","铺贴：墙砖压地砖、留缝 1.5–3mm、空鼓率≤5%、地漏找坡。"],
+    pitfalls:["防水只刷一遍厚度不够，等于没刷（≥2 遍总厚≥1.5mm）。","闭水试验走过场不通知楼下，入住后漏水扯皮。","卫生间门槛石不做挡水，水渗门外泡坏地板。","地砖上墙不刷背胶不用薄贴，空鼓脱落。","瓷砖不留缝或美缝太晚，热胀冷缩开裂。"],
+    products:[
+      {name:"柔性/刚性防水涂料",cat:"防水",note:"墙刚地柔是常见搭配。",params:[["类型","刚性(墙)+柔性(地/管根)"],["涂布","2 遍，总厚≥1.5mm"],["高度","淋浴区墙≥180cm，其余≥30cm"],["品牌","东方雨虹/德高/汉高百得"]]},
+      {name:"瓷砖",cat:"主材",note:"按空间选吸水率与防滑。",params:[["厨卫墙","釉面砖 300×600 / 400×800 mm"],["客餐厅地","800×800 / 750×1500 mm"],["卫生间地","防滑 R10 以上"],["吸水率","全瓷砖<0.5%，瓷片>10%"]]},
+      {name:"瓷砖背胶 + 粘结剂",cat:"粘贴",note:"地砖上墙、大砖薄贴必用。",params:[["背胶","单/双组份，滚涂"],["粘结剂","C1/C2 级瓷砖胶，薄贴法"]]},
+      {name:"水泥 + 中砂",cat:"基材",note:"传统厚贴用。",params:[["水泥","32.5R 砌筑抹灰 / 42.5 贴砖"],["砂","中砂，含泥量低"]]},
+      {name:"地漏",cat:"排水",note:"防臭防堵，湿干区分开。",params:[["淋浴","深水封/磁吸 T 型，排量大"],["洗衣机","专用地漏(直排)"],["防臭","深水封优先，防虫防味"]]},
+      {name:"美缝剂/环氧彩砂",cat:"收口",note:"防水防霉，颜值耐用兼得。",params:[["厨房卫浴","环氧彩砂（防霉优）"],["其他","真瓷胶/美缝剂"],["品牌","德高/卓高/美巢"],["时机","贴砖 7 天后、家具前做"]]}
+    ]},
+  {id:"s5", num:"05", name:"木工工程", tag:"泥瓦后 1–2 周", icon:"🪚",
+    sum:"吊顶、背景墙基层、现场柜体（若做）。现多数定制柜工厂生产，现场木工主要做吊顶和造型基层。板材环保等级是重点。",
+    tasks:["吊顶放线：标高、造型、灯位开孔确定。","轻钢龙骨吊顶：主骨吊筋≤120cm、副骨≤40cm，自攻螺丝固定石膏板。","阴阳角接缝贴绷带，钉眼防锈。","背景墙/造型基层打底（木工板/欧松板）。","现场柜体（如做）：下料、组装、收口。"],
+    pitfalls:["吊顶用木龙骨不做防火防潮，厨卫尤其不能木龙骨（应铝扣板）。","石膏板接缝不开 V 槽不贴绷带，必裂。","板材环保等级只看价格不看报告，甲醛超标。","吊顶角龙骨不到位，后期下坠。"],
+    products:[
+      {name:"轻钢龙骨 + 石膏板",cat:"吊顶",note:"客餐厅吊顶主流。",params:[["主骨","50 系列，吊筋≤120cm"],["副骨","50/38 系列，间距≤40cm"],["石膏板","9.5/12 mm，龙牌/可耐福/圣戈班"],["转角","L 型整板切割防裂"]]},
+      {name:"柜体板材",cat:"木作",note:"定制柜核心，环保看等级。",params:[["类型","颗粒板/多层实木/欧松板(OSB)"],["环保","E1/E0/ENF（ENF 最优）"],["封边","PUR 或激光封边更耐潮"]]},
+      {name:"铝扣板吊顶",cat:"厨卫",note:"厨卫防潮首选，便于检修。",params:[["规格","300×300 mm"],["厚度","0.6–0.8 mm"],["配套","集成照明/换气/暖风模块"]]},
+      {name:"环保等级对照",cat:"标准",note:"买板材认准检测报告。",params:[["E1","≤0.124 mg/m³（国标底线）"],["E0","≤0.050 mg/m³"],["ENF","≤0.025 mg/m³（最严）"]]}
+    ]},
+  {id:"s6", num:"06", name:"油漆 · 墙面工程", tag:"木工后 1–2 周", icon:"🎨",
+    sum:"墙面颜值耐用看这里。耐水腻子打底、底漆不能省、面漆两遍，阴干别抢干。乳胶漆环保认准权威认证。",
+    tasks:["基层修补：石膏找平、嵌缝、挂网处理裂缝。","刮腻子：耐水腻子 2–3 遍，每遍干透再刮，打磨平整。","涂刷底漆 1 遍（封闭抗碱增附着力）。","涂刷面漆 2 遍，颜色一致无流坠无刷痕。","阴阳角靠尺修直，开关插座周边收口干净。"],
+    pitfalls:["用非耐水腻子，南方/厨卫周边易粉化脱落。","底漆省略直接上面漆，发花附着力差。","腻子未干透就刷漆，后期起泡脱落。","只盯漆价忽略施工（七分腻子三分漆）。","环保只看广告不认十环/A+/蓝天使等认证。"],
+    products:[
+      {name:"耐水腻子",cat:"基层",note:"N 型耐水，潮湿区必备。",params:[["标准","N 型（耐水）"],["遍数","2–3 遍，干透打磨"],["品牌","美巢/德高/立邦"]]},
+      {name:"乳胶漆",cat:"面层",note:"底漆+面漆配套用。",params:[["工艺","1 底 + 2 面"],["认证","十环/法国 A+/蓝天使"],["VOC","越低越好，优选<30 g/L"],["品牌","多乐士/立邦/芬琳/都芳"]]},
+      {name:"底漆",cat:"面层",note:"封闭抗碱，不能省。",params:[["作用","抗碱、防霉、提升面漆附着力"],["遍数","1 遍"]]},
+      {name:"嵌缝石膏/接缝带",cat:"修补",note:"防开裂。",params:[["用法","板缝嵌填+贴绷带+再刮腻子"]]}
+    ]},
+  {id:"s7", num:"07", name:"主材安装", tag:"油漆后 2–3 周", icon:"🚪",
+    sum:"门、橱柜、卫浴、窗户、木地板集中进场。尺寸全在前序阶段预留好，这里是「对图安装」。顺序：窗→门→橱柜→卫浴→地板→踢脚线。",
+    tasks:["先装窗户/封阳台（旧房改造重点，影响隔音保暖）。","室内门安装：门套、门扇、五金、垭口。","橱柜安装：地柜→台面→吊柜→水槽龙头→烟机灶具。","卫浴安装：马桶(坑距核对)、浴室柜、花洒、五金。","木地板铺设 + 踢脚线收口。","全屋定制柜（衣柜等）进场安装。"],
+    pitfalls:["装门前没复尺，门洞尺寸不符装不上。","马桶坑距量错（305/400 搞混），装完离墙大缝或顶不进。","橱柜高低台没提前定，炒菜架胳膊、洗碗硌腰。","木地板与瓷砖交接未用过门石/压条收口，起翘。","旧房换窗未做防水坡，雨水倒灌。"],
+    products:[
+      {name:"室内门",cat:"门窗",note:"门洞提前预留。",params:[["标准门洞","宽 860–900 / 高 2000–2100 / 墙厚 100–120 mm"],["门扇厚","40–45 mm"],["卧室","实木复合"],["厨卫","铝合金/玻璃(防潮)"]]},
+      {name:"整体橱柜",cat:"厨房",note:"高低台是舒适关键。",params:[["地柜高","80–85 cm（身高/2+5~10）"],["高低台","水槽区 90 / 灶台区 80 cm"],["吊柜底","距台面 50–60 cm（底约 150–160 cm）"],["台面深","60 cm；吊柜深 35 cm"],["台面材","石英石/岩板，厚 15–20 mm"],["水槽","单槽 600–720 / 双槽 750–900 mm"]]},
+      {name:"烟机 + 灶具",cat:"厨房",note:"嵌入式，尺寸提前定。",params:[["烟机宽","900 mm（顶吸/侧吸）"],["风量","18–23 m³/min"],["风压","300–450 Pa"],["灶具宽","750 mm；排烟管 Φ180 mm"]]},
+      {name:"马桶",cat:"卫浴",note:"坑距务必现场复核。",params:[["坑距","305 / 400 mm（墙到排污中心）"],["总长","68–72 cm"],["宽","35–40 cm"],["高","70–75 cm"],["智能款","预留防水插座+进水"]]},
+      {name:"浴室柜",cat:"卫浴",note:"按台盆与收纳选。",params:[["宽","60/80/100/120 cm"],["镜柜","带除雾灯更佳"],["排水","墙排更美观易清洁"]]},
+      {name:"花洒",cat:"卫浴",note:"顶喷+手持组合。",params:[["顶喷","Φ200–250 mm"],["龙头","恒温款防烫"],["管","暗装/明装按需"]]},
+      {name:"木地板",cat:"地面",note:"实木/复合/强化。",params:[["厚度","实木 18mm / 复合 12–15mm"],["留缝","墙边 8–12 mm 伸缩缝"],["环保","ENF/E0 优选"]]}
+    ]},
+  {id:"s8", num:"08", name:"软装 · 家具 · 家电进场", tag:"安装后 1–2 周", icon:"🛋️",
+    sum:"硬装打底，软装定调。先大件后小件：沙发床柜→窗帘灯具→家电→饰品。尺寸依旧是命门，尤其通道与开门半径。",
+    tasks:["大件家具先行：床、衣柜、沙发、餐桌按图摆放，预留通道≥60cm。","窗帘测量安装：离地 2–3cm，褶皱 1.5–2 倍。","灯具安装：主灯、射灯、氛围灯分层。","家电到位：冰箱、洗衣机、空调、电视、热水器、洗碗机。","饰品与收纳：挂画、绿植、地毯、收纳盒逐步完善。","通风散味，入住前检测甲醛。"],
+    pitfalls:["沙发买大了挡通道堵插座，先量好再下单。","窗帘只做一层，白天刺眼半夜透光——纱+遮光帘搭配。","冰箱预留尺寸不含散热缝，嵌入后散热差费电。","床+床垫超高，床头靠不上或撞灯。","家电型号与前期水电预留不符，插不上或露管线。"],
+    products:[
+      {name:"沙发",cat:"家具",note:"按客厅面宽选。",params:[["单人","宽 80–100 cm"],["双人","150–180 cm"],["三人","210–240 cm"],["深度","90–100 cm；座高 40–45 cm"]]},
+      {name:"床 + 床垫",cat:"家具",note:"主卧常见尺寸。",params:[["床","1.5×2.0 / 1.8×2.0 / 2.0×2.2 m"],["床垫厚","20–30 cm"],["床高","含床垫 45–55 cm 为宜"]]},
+      {name:"衣柜",cat:"家具",note:"定制/成品都看深度。",params:[["深度","55–60 cm（推拉门+8–10）"],["长衣区","挂杆高 170–180 cm"],["叠放区","层板高 30–40 cm"],["抽屉","高 20–25 cm"]]},
+      {name:"窗帘",cat:"软装",note:"遮光与层次。",params:[["离地","2–3 cm"],["褶皱","1.5–2 倍布宽"],["组合","纱帘+遮光帘"],["轨道","罗马杆/静音轨道"]]},
+      {name:"冰箱",cat:"家电",note:"预留散热与开门空间。",params:[["双门","宽 60 × 高 170 cm"],["对开/十字","宽 90 × 高 180 cm"],["散热缝","两侧+背部各留 5–10 cm"]]},
+      {name:"滚筒洗衣机",cat:"家电",note:"嵌入需预留。",params:[["尺寸","60×60×85 cm"],["容量","10 kg 主流"],["上下水","预留进水+地漏"]]},
+      {name:"空调",cat:"家电",note:"按面积选匹数。",params:[["1 匹","10–15 ㎡"],["1.5 匹","15–20 ㎡"],["2 匹","20–30 ㎡"],["3 匹","30–40 ㎡"]]},
+      {name:"电视",cat:"家电",note:"观看距离定尺寸。",params:[["55 寸","约 121×70 cm，视距 2–2.5m"],["65 寸","约 145×84 cm，视距 2.5–3m"],["75 寸","约 167×96 cm，视距 3–3.5m"]]},
+      {name:"热水器",cat:"家电",note:"燃气/电热二选一。",params:[["燃气","13 / 16 L（升/分钟）"],["电热","60 / 80 L 储水"],["安装","燃气强排向外、电热承重墙"]]},
+      {name:"洗碗机",cat:"家电",note:"嵌入橱柜预留。",params:[["8 套","宽 45 cm（单身/二人）"],["13 套","宽 60 cm（家庭）"],["安装","靠近水槽上下水"]]},
+      {name:"扫地机器人",cat:"家电",note:"基站位置要在水电阶段定，上下水版更省心。",params:[["机身","直径 33–35 cm，高 9–10 cm（能否进沙发底看这个）"],["基站占地","约 40×50 cm，前方留 ≥60 cm 出入空间"],["上下水版","预留进水管+排水+电源（三合一），免手动加水倒污"],["普通版","仅需 5 孔电源插座"],["过门","推拉门滑轨/门槛 ≤2 cm 才能自主通过"],["家具","沙发/床/柜离地 ≥10 cm 便于进入"]]},
+      {name:"蒸烤箱（嵌入式）",cat:"家电",note:"大功率，必须独立回路+提前开孔。",params:[["标准开孔","宽 56 × 高 55 cm（60 宽机型），整机约 60×60 cm"],["电源","16A 独立回路（勿与普通插座共用）"],["安装高度","嵌入高柜，操作面距地 90–130 cm（视线高度）"],["散热","前方排风，柜体上下留散热缝"],["蒸烤一体","部分型号需预留进水+排水，订货前确认"]]},
+      {name:"烘干机 / 洗烘套装",cat:"家电",note:"叠放省地，并排要宽。",params:[["单机","60×60×85 cm"],["叠放","专用支架，总高约 175 cm，注意吊柜净高"],["并排","需 ≥120 cm 宽"],["电源","16A 独立回路"],["排气","热泵/冷凝免排气管；排湿式需排风管"]]},
+      {name:"净水器（前置+RO+管线机）",cat:"家电",note:"全屋净水要设备位+排水。",params:[["前置过滤","40 μm，装水表后/入户总管，旁留排污地漏"],["末端 RO","400–800G，厨下空间约 40×20×45 cm，需电源+下水"],["管线机","壁挂/台式，预留电源与进水（2 分 PE 管）"],["中央净水/软水","设备间预留 60×60 cm、电源、地漏排水"]]},
+      {name:"垃圾处理器",cat:"家电",note:"水槽下预留插座，别忘止逆。",params:[["功率","0.5–0.75 HP（家用足够）"],["接口","标准水槽下口径 90 mm"],["电源","水槽柜内预留带开关插座"],["注意","与洗碗机排水共用需加止逆/存水弯"]]},
+      {name:"投影 / 激光电视",cat:"家电",note:"先定幕布尺寸再定投影距离。",params:[["100 寸幕","约 221×124 cm"],["120 寸幕","约 265×149 cm"],["长焦投影","100 寸约 3–3.5 m 投距"],["激光电视","0.2–0.5 m 贴墙，配抗光幕"],["预留","吊装电源+HDMI 预埋管，电视柜留信号口"]]},
+      {name:"集成灶",cat:"家电",note:"下排烟，与橱柜开孔联动。",params:[["宽度","900 / 1000 mm"],["排烟","下排式，烟管 Φ180 mm"],["电源","16A 独立回路"],["配合","橱柜开孔、地柜高度、烟道位置提前对图"]]},
+      {name:"中央空调 / 新风",cat:"家电",note:"吊顶前定主机与检修口。",params:[["中央空调","吊顶内机，检修口 400×400 mm，冷凝水就近排放"],["新风主机","设备间/阳台，管道 Φ75/Φ110，设送排风口"],["预留","主机位电源+控制线，梁上开孔需结构确认"],["风口","送风口与回风口错位布置，避免短路"]]}
+    ]},
+  {id:"s9", num:"09", name:"验收 · 通风 · 入住", tag:"收尾 2–4 周", icon:"✅",
+    sum:"别急着搬。逐项验收、科学通风、甲醛检测合格再入住。旧房改造尤其注意原有结构和水路老化是否彻底解决。",
+    tasks:["逐项验收：水电（试水试电）、瓷砖空鼓、墙面平整、门窗密封、柜体五金。","出具验收单，问题项列清单要求整改闭环。","科学通风：南北对流，高温高湿加速挥发，至少 3–6 个月。","甲醛/TVOC 检测：密闭 12h 后自测或找 CMA 机构。","软装细节补全，绿植炭包辅助，不迷信一次性除醛。","入住后保留水电点位图、保修卡、发票。"],
+    pitfalls:["通风不够就入住，尤其孕妇小孩家庭风险高。","只闻味道判断甲醛——无味也可能超标，靠检测。","验收走过场，小问题拖成大维修（如窗缝漏雨）。","迷信「除醛神药」，通风才是最有效手段。","旧房未复查老旧管线，入住后再爆管。"],
+    products:[
+      {name:"甲醛检测仪/盒",cat:"检测",note:"自测初筛，精确找 CMA。",params:[["自测","电化学传感器/酚试剂盒"],["精度","自测仪 ±20%，仅供参考"],["权威","CMA 机构出具报告"]]},
+      {name:"通风方案",cat:"治理",note:"不花钱最有效。",params:[["方式","南北对流+高温高湿"],["周期","至少 3–6 个月"],["辅助","工业扇对吹加速"]]},
+      {name:"验收清单模板",cat:"文档",note:"逐房逐项打勾。",params:[["项目","水电/瓦/木/漆/门窗/柜体"],["标准","空鼓≤5%、漏电测试、密封性"]]},
+      {name:"绿植/炭包",cat:"辅助",note:"锦上添花非主力。",params:[["绿植","绿萝/龟背竹（心理+微量）"],["炭包","定期暴晒更换"]]}
+    ]}
+];
+
+const STYLES = [
+  {name:"现代简约",en:"MODERN MINIMAL",c1:"#2b2b2b",c2:"#9a7b4f",desc:"去繁就简，线条利落，强调功能与留白。最不容易翻车、最显干净。",materials:["乳胶漆大白墙","哑光瓷砖","极简平板柜","金属/岩板点缀"],elements:["无主灯","隐形门","通顶柜","藏光"],suit:"小户型、年轻家庭、预算中等",cost:"硬装 800–1500 元/㎡"},
+  {name:"北欧",en:"SCANDINAVIAN",c1:"#d8cfc0",c2:"#7a9a8e",desc:"浅木色+大面积白+跳色软装，温馨明亮，强调自然与采光。",materials:["浅橡木地板","白色护墙","布艺沙发","绿植"],elements:["原木","羊绒质感","几何挂画","大窗"],suit:"中小户型、采光一般、三口之家",cost:"硬装 700–1300 元/㎡"},
+  {name:"日式侘寂",en:"JAPANESE WABI-SABI",c1:"#b7a98f",c2:"#6d665c",desc:"微水泥、原木、低饱和，追求质朴、留白与时光感，安静治愈。",materials:["微水泥","实木","亚麻","手工陶器"],elements:["下沉式玄关","地台","暖光","无多余装饰"],suit:"喜欢安静、有审美追求的业主",cost:"硬装 1200–2500 元/㎡"},
+  {name:"新中式",en:"NEW CHINESE",c1:"#7a3b2e",c2:"#b4894f",desc:"传统元素现代化，对称、留白、木格栅、山水意象，沉稳有文化底蕴。",materials:["胡桃木/柚木","石材","水墨元素","棉麻"],elements:["月洞门","博古架","字画","格栅屏风"],suit:"中大户型、文化偏好强的家庭",cost:"硬装 1500–3000 元/㎡"},
+  {name:"法式轻奢",en:"FRENCH LUXE",c1:"#e7dccb",c2:"#b4894f",desc:"石膏线、雕花角花、拱形门洞、人字拼，优雅浪漫，对层高要求高。",materials:["石膏线条","护墙板","丝绒","黄铜"],elements:["石膏角花","壁炉造型","拱门","水晶灯"],suit:"层高≥2.8m、面积较大",cost:"硬装 1800–3500 元/㎡"},
+  {name:"美式",en:"AMERICAN",c1:"#6b4a2f",c2:"#a8794a",desc:"厚重木质、做旧质感、壁炉、护墙，大气舒适但有压迫感，需空间。",materials:["做旧实木","皮革","文化石","厚窗帘"],elements:["护墙板","壁炉","大沙发","复古灯"],suit:"大户型、别墅、偏爱厚重感",cost:"硬装 1600–3200 元/㎡"},
+  {name:"工业风",en:"INDUSTRIAL",c1:"#3a3a3a",c2:"#a8593b",desc:"裸顶、水泥、砖墙、黑铁管线，粗犷不羁，适合 Loft 与年轻人。",materials:["水泥自流平","红砖/文化砖","黑铁","轨道灯"],elements:["裸顶喷黑","金属网","复古灯泡","开放管"],suit:"Loft、公寓、个性业主",cost:"硬装 1000–2200 元/㎡"},
+  {name:"意式极简",en:"ITALIAN MINIMAL",c1:"#1f1f1f",c2:"#8a6d3b",desc:"高级灰、真皮、岩板、隐形收口，克制而奢华，工艺要求极高。",materials:["岩板","真皮","哑光金属","隐框门"],elements:["无缝收口","悬浮家具","一体化柜","低饱和灰"],suit:"大平层、预算充足、重质感",cost:"硬装 2500–5000 元/㎡"}
+];
+
+/* ============== 参照图 SVG ============== */
+const REF={
+  outlet(){const H=c=>240-c*210/230;let s='<svg viewBox="0 0 470 280" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="40" y="30" width="210" height="210" fill="#f5f7fa" stroke="#dce2e8" stroke-width="1.5"/>';
+    s+='<rect x="18" y="240" width="278" height="7" fill="#f2c9a6"/>';
+    s+='<line x1="30" y1="30" x2="30" y2="240" stroke="#e07b39" stroke-width="1.5"/><text x="15" y="138" font-size="11" fill="#e07b39" transform="rotate(-90 15 138)" text-anchor="middle">230cm</text>';
+    [["210","空调挂机 200–220"],["135","开关面板 130–140"],["115","厨房台面 110–120"],["70","床头 70"],["30","普通/马桶 30"]].forEach(function(it){const y=H(+it[0]);s+='<rect x="86" y="'+(y-7)+'" width="20" height="14" rx="2" fill="#1e3a5f"/>';s+='<line x1="106" y1="'+y+'" x2="262" y2="'+y+'" stroke="#e07b39" stroke-dasharray="3 3"/>';s+='<text x="266" y="'+(y+4)+'" font-size="12.5" fill="#4a5a6c">'+it[1]+'</text>';});
+    s+='</svg>';return s;},
+  cabinet(){let s='<svg viewBox="0 0 420 255" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="18" y="235" width="384" height="7" fill="#f2c9a6"/>';
+    s+='<rect x="40" y="155" width="120" height="80" fill="#eef3f8" stroke="#f2c9a6"/><rect x="36" y="149" width="128" height="7" fill="#e07b39"/>';
+    s+='<rect x="175" y="145" width="140" height="90" fill="#eef3f8" stroke="#f2c9a6"/><rect x="171" y="139" width="148" height="7" fill="#e07b39"/>';
+    s+='<rect x="175" y="10" width="140" height="65" fill="#dce5ee" stroke="#f2c9a6"/>';
+    s+='<text x="92" y="200" font-size="12" fill="#4a5a6c" text-anchor="middle">地柜 80</text>';
+    s+='<text x="245" y="195" font-size="12" fill="#4a5a6c" text-anchor="middle">地柜 90</text>';
+    s+='<text x="245" y="46" font-size="12" fill="#4a5a6c" text-anchor="middle">吊柜 底150–160</text>';
+    s+='<text x="100" y="140" font-size="12" fill="#e07b39" text-anchor="middle">80</text>';
+    s+='<text x="245" y="130" font-size="12" fill="#e07b39" text-anchor="middle">90</text>';
+    s+='</svg>';return s;},
+  toilet(){let s='<svg viewBox="0 0 460 240" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="44" y="20" width="7" height="185" fill="#c4cdd6"/>';
+    s+='<line x1="20" y1="205" x2="450" y2="205" stroke="#f2c9a6" stroke-width="2"/>';
+    s+='<rect x="51" y="95" width="44" height="80" rx="4" fill="#dce5ee" stroke="#f2c9a6"/>';
+    s+='<ellipse cx="165" cy="160" rx="78" ry="26" fill="#eef3f8" stroke="#f2c9a6"/>';
+    s+='<circle cx="202" cy="205" r="9" fill="#e07b39"/>';
+    s+='<line x1="51" y1="198" x2="202" y2="198" stroke="#c0392b" stroke-dasharray="4 3"/>';
+    s+='<text x="120" y="192" font-size="12" fill="#c0392b" text-anchor="middle">坑距 305</text>';
+    s+='<line x1="51" y1="222" x2="250" y2="222" stroke="#e07b39" stroke-dasharray="4 3"/>';
+    s+='<text x="150" y="236" font-size="12" fill="#e07b39" text-anchor="middle">坑距 400（备选）</text>';
+    s+='<text x="120" y="125" font-size="11.5" fill="#4a5a6c" text-anchor="middle">马桶占位 68–72cm</text>';
+    s+='</svg>';return s;},
+  wardrobe(){let s='<svg viewBox="0 0 380 280" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="40" y="30" width="300" height="210" fill="#f8fafc" stroke="#f2c9a6" stroke-width="1.5"/>';
+    s+='<line x1="220" y1="30" x2="220" y2="240" stroke="#f2c9a6"/>';
+    s+='<line x1="55" y1="120" x2="205" y2="120" stroke="#e07b39" stroke-width="2"/>';
+    for(let i=0;i<3;i++){s+='<path d="M'+(70+i*45)+' 120 l12 22 l12 -22" fill="none" stroke="#1e3a5f" stroke-width="1.5"/>';}
+    s+='<line x1="235" y1="80" x2="325" y2="80" stroke="#f2c9a6"/><line x1="235" y1="120" x2="325" y2="120" stroke="#f2c9a6"/><line x1="235" y1="160" x2="325" y2="160" stroke="#f2c9a6"/>';
+    s+='<rect x="235" y="178" width="90" height="26" fill="#eef3f8" stroke="#f2c9a6"/><rect x="235" y="208" width="90" height="20" fill="#eef3f8" stroke="#f2c9a6"/>';
+    s+='<text x="128" y="62" font-size="12" fill="#4a5a6c" text-anchor="middle">长衣区 170–180</text>';
+    s+='<text x="280" y="68" font-size="11.5" fill="#4a5a6c" text-anchor="middle">叠放 30–40</text>';
+    s+='<text x="280" y="200" font-size="11.5" fill="#4a5a6c" text-anchor="middle">抽屉 20–25</text>';
+    s+='<text x="46" y="24" font-size="11.5" fill="#e07b39">深 55–60cm</text>';
+    s+='</svg>';return s;},
+  fridge(){let s='<svg viewBox="0 0 380 260" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="130" y="45" width="120" height="175" fill="#eef3f8" stroke="#e07b39" stroke-width="1.5"/>';
+    s+='<line x1="130" y1="120" x2="250" y2="120" stroke="#e07b39"/>';
+    s+='<line x1="110" y1="55" x2="110" y2="210" stroke="#c0392b" stroke-dasharray="4 3"/><line x1="270" y1="55" x2="270" y2="210" stroke="#c0392b" stroke-dasharray="4 3"/>';
+    s+='<text x="110" y="235" font-size="11.5" fill="#c0392b" text-anchor="middle">散热 5–10</text>';
+    s+='<text x="270" y="235" font-size="11.5" fill="#c0392b" text-anchor="middle">散热 5–10</text>';
+    s+='<text x="190" y="38" font-size="12" fill="#4a5a6c" text-anchor="middle">宽 90 / 高 180cm</text>';
+    s+='</svg>';return s;},
+  waterproof(){let s='<svg viewBox="0 0 380 280" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="40" y="20" width="200" height="220" fill="#f5f7fa" stroke="#dce2e8" stroke-width="1.5"/>';
+    s+='<rect x="150" y="60" width="90" height="180" fill="#d6e2ec" opacity="0.85"/>';
+    s+='<rect x="40" y="210" width="200" height="30" fill="#d6e2ec" opacity="0.6"/>';
+    s+='<rect x="18" y="240" width="244" height="7" fill="#f2c9a6"/>';
+    s+='<text x="195" y="50" font-size="11.5" fill="#1e3a5f" text-anchor="middle">淋浴区 ≥180cm</text>';
+    s+='<text x="140" y="262" font-size="11.5" fill="#1e3a5f" text-anchor="middle">其他区域 ≥30cm</text>';
+    s+='<text x="305" y="160" font-size="11.5" fill="#c0392b">门槛挡水</text><line x1="240" y1="205" x2="272" y2="205" stroke="#c0392b" stroke-width="4"/>';
+    s+='</svg>';return s;},
+  strongweak(){let s='<svg viewBox="0 0 380 200" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="40" y="60" width="300" height="16" rx="3" fill="#c0392b"/>';
+    s+='<rect x="40" y="124" width="300" height="16" rx="3" fill="#1e3a5f"/>';
+    s+='<text x="50" y="52" font-size="12" fill="#c0392b">强电</text><text x="50" y="158" font-size="12" fill="#1e3a5f">弱电</text>';
+    s+='<line x1="300" y1="76" x2="300" y2="124" stroke="#e07b39" stroke-dasharray="3 3"/><text x="306" y="103" font-size="11.5" fill="#e07b39">≥30</text>';
+    s+='<rect x="180" y="68" width="20" height="44" fill="#f2c9a6" opacity="0.9"/>';
+    s+='<text x="190" y="186" font-size="11" fill="#4a5a6c" text-anchor="middle">交叉处包锡纸屏蔽</text>';
+    s+='</svg>';return s;},
+  smart(){let s='<svg viewBox="0 0 420 260" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="40" y="20" width="340" height="220" fill="#f5f7fa" stroke="#dce2e8" stroke-width="1.5"/>';
+    s+='<rect x="165" y="38" width="90" height="108" rx="6" fill="#dce5ee" stroke="#f2c9a6"/>';
+    s+='<rect x="182" y="60" width="56" height="32" rx="4" fill="#fff" stroke="#e07b39"/><rect x="182" y="100" width="56" height="28" rx="4" fill="#fff" stroke="#e07b39"/>';
+    s+='<rect x="160" y="156" width="100" height="72" rx="4" fill="#f7f9fb" stroke="#e07b39" stroke-width="1.5"/>';
+    s+='<line x1="180" y1="228" x2="180" y2="198" stroke="#c0392b" stroke-width="3"/><text x="180" y="246" font-size="11" fill="#c0392b" text-anchor="middle">L火</text>';
+    s+='<line x1="210" y1="228" x2="210" y2="198" stroke="#2f6fb0" stroke-width="3"/><text x="210" y="246" font-size="11" fill="#2f6fb0" text-anchor="middle">N零</text>';
+    s+='<line x1="240" y1="228" x2="240" y2="198" stroke="#c9a227" stroke-width="3"/><text x="240" y="246" font-size="11" fill="#c9a227" text-anchor="middle">PE地</text>';
+    s+='<rect x="190" y="174" width="40" height="20" rx="3" fill="#2f6fb0" opacity="0.18"/><text x="210" y="188" font-size="11" fill="#2f6fb0" text-anchor="middle">N必留</text>';
+    s+='<rect x="50" y="40" width="100" height="42" rx="6" fill="#eef3f8" stroke="#e07b39"/><text x="100" y="58" font-size="11" fill="#4a5a6c" text-anchor="middle">零火版</text><text x="100" y="73" font-size="11" fill="#4a5a6c" text-anchor="middle">智能开关</text>';
+    s+='<rect x="50" y="186" width="100" height="36" rx="6" fill="#fbe7df" stroke="#c0392b"/><text x="100" y="201" font-size="10.5" fill="#c0392b" text-anchor="middle">✗ 弃用单火</text><text x="100" y="215" font-size="10.5" fill="#c0392b" text-anchor="middle">/凌动方案</text>';
+    s+='</svg>';return s;},
+  smartp(){let s='<svg viewBox="0 0 420 280" xmlns="http://www.w3.org/2000/svg">';
+    const rooms=[[30,28,90,128,"卧室"],[130,28,160,128,"客厅"],[30,166,120,80,"厨房"],[160,166,110,80,"卫生间"],[280,166,110,80,"阳台"]];
+    rooms.forEach(function(r){s+='<rect x="'+r[0]+'" y="'+r[1]+'" width="'+r[2]+'" height="'+r[3]+'" fill="#f8fafc" stroke="#f2c9a6"/>';s+='<text x="'+(r[0]+6)+'" y="'+(r[1]+16)+'" font-size="11" fill="#e07b39">'+r[4]+'</text>';});
+    const pts=[[178,72,"中控屏"],[235,60,"电视墙网口"],[268,112,"吸顶AP"],[200,120,"窗帘电机"],[72,82,"网口+窗帘"],[82,128,"存在传感"],[80,212,"燃气报警"],[208,206,"智能镜/水浸"],[332,212,"晾衣架电"],[332,184,"摄像头"]];
+    pts.forEach(function(p){s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="4" fill="#e07b39"/>';s+='<text x="'+(p[0]+7)+'" y="'+(p[1]+4)+'" font-size="9.5" fill="#4a5a6c">'+p[2]+'</text>';});
+    s+='<text x="30" y="266" font-size="9.5" fill="#6a7787">点位仅示意；多数传感器电池供电免布线，仅标注需留电源/网口处</text>';
+    s+='</svg>';return s;},
+  robot(){let s='<svg viewBox="0 0 420 270" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="20" y="20" width="380" height="230" fill="#f5f7fa" stroke="#dce2e8" stroke-width="1.5"/>';
+    s+='<line x1="20" y1="210" x2="400" y2="210" stroke="#1e3a5f" stroke-width="2"/>';
+    s+='<circle cx="105" cy="178" r="28" fill="#eef3f8" stroke="#e07b39" stroke-width="2"/><circle cx="105" cy="178" r="8" fill="#e07b39"/>';
+    s+='<text x="105" y="242" font-size="11" fill="#4a5a6c" text-anchor="middle">机身直径 33–35cm · 高 9–10cm</text>';
+    s+='<rect x="240" y="120" width="70" height="90" rx="4" fill="#dce5ee" stroke="#1e3a5f"/>';
+    s+='<text x="275" y="170" font-size="11" fill="#4a5a6c" text-anchor="middle">基站</text><text x="275" y="236" font-size="11" fill="#4a5a6c" text-anchor="middle">40×50cm 占位</text>';
+    s+='<line x1="240" y1="200" x2="150" y2="200" stroke="#e07b39" stroke-dasharray="4 3"/><text x="195" y="217" font-size="11" fill="#e07b39" text-anchor="middle">前方留 ≥60cm</text>';
+    s+='<rect x="60" y="55" width="120" height="38" rx="4" fill="#eef3f8" stroke="#1e3a5f"/>';
+    s+='<text x="120" y="78" font-size="11" fill="#4a5a6c" text-anchor="middle">家具/床底</text><text x="120" y="116" font-size="11" fill="#4a5a6c" text-anchor="middle">离地 ≥10cm 可进入</text>';
+    s+='<text x="345" y="82" font-size="10.5" fill="#c0392b" text-anchor="middle">门槛/滑轨</text><text x="345" y="98" font-size="10.5" fill="#c0392b" text-anchor="middle">≤2cm 方可过</text>';
+    s+='</svg>';return s;},
+  oven(){let s='<svg viewBox="0 0 420 280" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="20" y="20" width="380" height="240" fill="#f5f7fa" stroke="#dce2e8" stroke-width="1.5"/>';
+    s+='<rect x="70" y="40" width="280" height="200" fill="#eef3f8" stroke="#1e3a5f"/>';
+    s+='<rect x="150" y="70" width="130" height="140" fill="#f5f7fa" stroke="#e07b39" stroke-width="2"/>';
+    s+='<rect x="156" y="76" width="118" height="128" fill="#dce5ee" stroke="#1e3a5f"/>';
+    s+='<circle cx="215" cy="140" r="14" fill="#e07b39"/>';
+    s+='<text x="215" y="108" font-size="11" fill="#4a5a6c" text-anchor="middle">开孔 56×55</text><text x="215" y="184" font-size="11" fill="#4a5a6c" text-anchor="middle">整机 60×60</text>';
+    s+='<rect x="40" y="88" width="22" height="30" rx="3" fill="#eef3f8" stroke="#e07b39"/><text x="51" y="134" font-size="10.5" fill="#c0392b" text-anchor="middle">16A 独立回路</text>';
+    s+='<line x1="150" y1="70" x2="150" y2="240" stroke="#1e3a5f" stroke-dasharray="3 3"/><text x="156" y="256" font-size="10.5" fill="#1e3a5f">操作面距地 90–130cm</text>';
+    s+='<line x1="150" y1="58" x2="280" y2="58" stroke="#e07b39" stroke-dasharray="4 3"/><text x="215" y="52" font-size="10.5" fill="#e07b39" text-anchor="middle">上下留散热缝</text>';
+    s+='<text x="362" y="150" font-size="10" fill="#4a5a6c" text-anchor="middle">蒸烤一体</text><text x="362" y="164" font-size="10" fill="#4a5a6c" text-anchor="middle">需进水+排水</text>';
+    s+='</svg>';return s;},
+  ppr(){let s='<svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="20" y="20" width="360" height="180" fill="#f5f7fa" stroke="#dce2e8" stroke-width="1.5"/>';
+    s+='<rect x="60" y="70" width="280" height="22" rx="6" fill="#e07b39"/><text x="340" y="86" font-size="11" fill="#e07b39" text-anchor="end">热水 左/上</text>';
+    s+='<rect x="60" y="120" width="280" height="22" rx="6" fill="#2f6fb0"/><text x="340" y="136" font-size="11" fill="#2f6fb0" text-anchor="end">冷水 右/下</text>';
+    s+='<text x="200" y="200" font-size="11" fill="#4a5a6c" text-anchor="middle">管径 20(4分)/25(6分)/32(1寸)；左热右冷、上热下冷</text>';
+    s+='</svg>';return s;},
+  panel(){let s='<svg viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="40" y="30" width="320" height="200" rx="8" fill="#eef3f8" stroke="#1e3a5f" stroke-width="2"/>';
+    s+='<rect x="60" y="50" width="50" height="34" fill="#1e3a5f"/><text x="85" y="72" font-size="11" fill="#fff" text-anchor="middle">总开</text>';
+    [["照明",60],["客插",124],["厨房",188],["卫",252],["空调",316]].forEach(function(p){s+='<rect x="'+p[1]+'" y="110" width="56" height="30" fill="#dce5ee" stroke="#1e3a5f"/><text x="'+(p[1]+28)+'" y="130" font-size="10" fill="#4a5a6c" text-anchor="middle">'+p[0]+'</text>';});
+    s+='<rect x="316" y="110" width="56" height="30" fill="#dce5ee" stroke="#e07b39"/><text x="344" y="130" font-size="10" fill="#c0392b" text-anchor="middle">冰箱</text>';
+    s+='<text x="200" y="200" font-size="10" fill="#4a5a6c" text-anchor="middle">2P 63A 漏保总开；各回路独立，冰箱单回路出差不断电</text>';
+    s+='</svg>';return s;},
+  weakbox(){let s='<svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="40" y="30" width="320" height="180" rx="8" fill="#eef3f8" stroke="#1e3a5f" stroke-width="2"/>';
+    s+='<rect x="60" y="55" width="80" height="44" fill="#dce5ee" stroke="#1e3a5f"/><text x="100" y="82" font-size="10.5" fill="#4a5a6c" text-anchor="middle">光猫</text>';
+    s+='<rect x="160" y="55" width="100" height="44" fill="#dce5ee" stroke="#1e3a5f"/><text x="210" y="82" font-size="10.5" fill="#4a5a6c" text-anchor="middle">路由/POE</text>';
+    s+='<rect x="285" y="55" width="36" height="44" fill="#e07b39"/><text x="303" y="150" font-size="10" fill="#c0392b" text-anchor="middle">86电</text>';
+    s+='<text x="200" y="140" font-size="10" fill="#4a5a6c" text-anchor="middle">各房间网线在此汇聚</text>';
+    s+='<text x="200" y="200" font-size="10" fill="#4a5a6c" text-anchor="middle">≥400×300mm，留 2–3 个 86 电源，设备散热</text>';
+    s+='</svg>';return s;},
+  door(){let s='<svg viewBox="0 0 320 280" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="20" y="20" width="280" height="240" fill="#f5f7fa" stroke="#dce2e8" stroke-width="1.5"/>';
+    s+='<rect x="80" y="40" width="160" height="200" fill="none" stroke="#1e3a5f" stroke-width="3"/>';
+    s+='<line x1="80" y1="250" x2="240" y2="250" stroke="#e07b39"/><text x="160" y="268" font-size="11" fill="#e07b39" text-anchor="middle">宽 860–900</text>';
+    s+='<line x1="56" y1="40" x2="56" y2="240" stroke="#1e3a5f" stroke-dasharray="3 3"/><text x="50" y="146" font-size="10" fill="#1e3a5f" text-anchor="middle" transform="rotate(-90 50 146)">高 2000–2100</text>';
+    s+='<text x="160" y="34" font-size="11" fill="#4a5a6c" text-anchor="middle">墙厚 100–120</text>';
+    s+='</svg>';return s;},
+  curtain(){let s='<svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="20" y="20" width="360" height="200" fill="#f5f7fa" stroke="#dce2e8" stroke-width="1.5"/>';
+    s+='<rect x="40" y="50" width="320" height="26" fill="#dce5ee" stroke="#1e3a5f"/>';
+    s+='<rect x="150" y="90" width="120" height="44" fill="#f5f7fa" stroke="#e07b39" stroke-width="2"/>';
+    s+='<circle cx="190" cy="112" r="10" fill="#1e3a5f"/>';
+    s+='<line x1="190" y1="136" x2="190" y2="170" stroke="#e07b39" stroke-dasharray="4 3"/><text x="200" y="186" font-size="10.5" fill="#e07b39">电机电源 220V 距顶10–15cm</text>';
+    s+='<text x="200" y="215" font-size="10" fill="#4a5a6c" text-anchor="middle">智能镜/晾衣架同需提前留电源，木工吊顶前交底</text>';
+    s+='</svg>';return s;},
+  sofa(){let s='<svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="20" y="20" width="360" height="200" fill="#f5f7fa" stroke="#dce2e8" stroke-width="1.5"/>';
+    s+='<rect x="60" y="90" width="190" height="70" rx="6" fill="#dce5ee" stroke="#1e3a5f"/>';
+    s+='<text x="155" y="130" font-size="11" fill="#4a5a6c" text-anchor="middle">三人 210–240</text>';
+    s+='<line x1="250" y1="125" x2="350" y2="125" stroke="#e07b39" stroke-dasharray="4 3"/><text x="300" y="142" font-size="10.5" fill="#e07b39" text-anchor="middle">通道 ≥60</text>';
+    s+='<text x="200" y="200" font-size="10" fill="#4a5a6c" text-anchor="middle">深 90–100，座高 40–45，下单前量客厅面宽</text>';
+    s+='</svg>';return s;},
+  bed(){let s='<svg viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="20" y="20" width="360" height="220" fill="#f5f7fa" stroke="#dce2e8" stroke-width="1.5"/>';
+    s+='<rect x="60" y="50" width="220" height="150" rx="6" fill="#dce5ee" stroke="#1e3a5f"/>';
+    s+='<text x="170" y="125" font-size="11" fill="#4a5a6c" text-anchor="middle">1.8×2.0 / 2.0×2.2</text>';
+    s+='<line x1="280" y1="125" x2="350" y2="125" stroke="#e07b39" stroke-dasharray="4 3"/><text x="315" y="142" font-size="10.5" fill="#e07b39" text-anchor="middle">过道</text>';
+    s+='<text x="200" y="225" font-size="10" fill="#4a5a6c" text-anchor="middle">含床垫高 45–55，床头留通道取物</text>';
+    s+='</svg>';return s;},
+  tv(){let s='<svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="20" y="20" width="360" height="200" fill="#f5f7fa" stroke="#dce2e8" stroke-width="1.5"/>';
+    s+='<rect x="44" y="40" width="14" height="170" fill="#eef3f8" stroke="#dce2e8"/>';
+    s+='<rect x="64" y="70" width="14" height="90" fill="#1e3a5f"/>';
+    s+='<line x1="82" y1="115" x2="340" y2="115" stroke="#e07b39" stroke-dasharray="4 3"/><text x="210" y="132" font-size="10.5" fill="#e07b39" text-anchor="middle">视距 2–3.5m</text>';
+    s+='<text x="200" y="200" font-size="10" fill="#4a5a6c" text-anchor="middle">55寸2–2.5m/65寸2.5–3m/75寸3–3.5m；挂墙中心高≈1.1m</text>';
+    s+='</svg>';return s;},
+  shower(){let s='<svg viewBox="0 0 320 280" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="20" y="20" width="280" height="240" fill="#f5f7fa" stroke="#dce2e8" stroke-width="1.5"/>';
+    s+='<rect x="40" y="40" width="13" height="200" fill="#eef3f8" stroke="#dce2e8"/>';
+    s+='<circle cx="160" cy="70" r="30" fill="#dce5ee" stroke="#1e3a5f"/><text x="160" y="74" font-size="10" fill="#4a5a6c" text-anchor="middle">顶喷</text>';
+    s+='<rect x="200" y="120" width="20" height="60" fill="#eef3f8" stroke="#1e3a5f"/>';
+    s+='<text x="160" y="200" font-size="10" fill="#4a5a6c" text-anchor="middle">顶喷 Φ200–250，混水阀高 100–120</text>';
+    s+='<text x="160" y="220" font-size="10" fill="#4a5a6c" text-anchor="middle">手持高度可调，恒温防烫</text>';
+    s+='</svg>';return s;},
+  floor(){let s='<svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg">';
+    s+='<polygon points="40,60 360,60 320,170 80,170" fill="#eef3f8" stroke="#1e3a5f" stroke-width="2"/>';
+    s+='<circle cx="200" cy="150" r="12" fill="#e07b39"/><text x="200" y="154" font-size="9" fill="#fff" text-anchor="middle">漏</text>';
+    s+='<line x1="120" y1="80" x2="190" y2="138" stroke="#e07b39" stroke-dasharray="4 3"/><line x1="280" y1="80" x2="212" y2="138" stroke="#e07b39" stroke-dasharray="4 3"/>';
+    s+='<text x="200" y="200" font-size="10" fill="#4a5a6c" text-anchor="middle">地漏放最低点，放坡 1% 指向地漏；淋浴用深水封</text>';
+    s+='</svg>';return s;},
+  proj(){let s='<svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="20" y="20" width="360" height="200" fill="#f5f7fa" stroke="#dce2e8" stroke-width="1.5"/>';
+    s+='<rect x="60" y="50" width="150" height="95" fill="#1e3a5f"/>';
+    s+='<text x="135" y="102" font-size="10" fill="#fff" text-anchor="middle">幕布 100/120寸</text>';
+    s+='<line x1="215" y1="98" x2="350" y2="98" stroke="#e07b39" stroke-dasharray="4 3"/><text x="282" y="115" font-size="10.5" fill="#e07b39" text-anchor="middle">投距</text>';
+    s+='<text x="200" y="180" font-size="10" fill="#4a5a6c" text-anchor="middle">100寸221×124/120寸265×149；激光电视贴墙 0.2–0.5m</text>';
+    s+='<text x="200" y="200" font-size="10" fill="#4a5a6c" text-anchor="middle">吊装电源 + HDMI 预埋管</text>';
+    s+='</svg>';return s;},
+  ceiling(){let s='<svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="20" y="20" width="360" height="180" fill="#f5f7fa" stroke="#dce2e8" stroke-width="1.5"/>';
+    s+='<rect x="40" y="70" width="320" height="22" fill="#eef3f8" stroke="#1e3a5f"/>';
+    s+='<line x1="80" y1="40" x2="80" y2="70" stroke="#e07b39"/><line x1="200" y1="40" x2="200" y2="70" stroke="#e07b39"/><line x1="320" y1="40" x2="320" y2="70" stroke="#e07b39"/><text x="140" y="56" font-size="9" fill="#e07b39" text-anchor="middle">主骨吊筋 ≤120</text>';
+    s+='<line x1="60" y1="92" x2="340" y2="92" stroke="#1e3a5f" stroke-dasharray="3 3"/><line x1="120" y1="92" x2="120" y2="108" stroke="#1e3a5f"/><line x1="200" y1="92" x2="200" y2="108" stroke="#1e3a5f"/><line x1="280" y1="92" x2="280" y2="108" stroke="#1e3a5f"/><text x="200" y="128" font-size="9" fill="#1e3a5f" text-anchor="middle">副骨 ≤40</text>';
+    s+='<text x="200" y="170" font-size="10" fill="#4a5a6c" text-anchor="middle">转角 L 型整板切割防裂，自攻螺丝固定石膏板</text>';
+    s+='</svg>';return s;},
+  washer(){let s='<svg viewBox="0 0 360 260" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="20" y="20" width="320" height="220" fill="#f5f7fa" stroke="#dce2e8" stroke-width="1.5"/>';
+    s+='<rect x="80" y="50" width="120" height="150" rx="6" fill="#dce5ee" stroke="#1e3a5f"/>';
+    s+='<rect x="215" y="70" width="10" height="40" fill="#2f6fb0"/><text x="235" y="92" font-size="9.5" fill="#2f6fb0">进水</text>';
+    s+='<rect x="215" y="150" width="34" height="20" fill="#e07b39"/><text x="235" y="164" font-size="9.5" fill="#c0392b">排水</text>';
+    s+='<text x="180" y="225" font-size="10" fill="#4a5a6c" text-anchor="middle">60×60×85；进水+地漏/下排，预留电源(16A烘干)</text>';
+    s+='</svg>';return s;},
+  hood(){let s='<svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="20" y="20" width="360" height="200" fill="#f5f7fa" stroke="#dce2e8" stroke-width="1.5"/>';
+    s+='<rect x="60" y="44" width="280" height="26" fill="#dce5ee" stroke="#1e3a5f"/>';
+    s+='<rect x="150" y="74" width="100" height="30" fill="#1e3a5f"/><text x="200" y="94" font-size="10" fill="#fff" text-anchor="middle">烟机</text>';
+    s+='<rect x="150" y="150" width="100" height="20" fill="#eef3f8" stroke="#1e3a5f"/><text x="200" y="164" font-size="9.5" fill="#4a5a6c" text-anchor="middle">灶台 高80</text>';
+    s+='<line x1="200" y1="104" x2="200" y2="150" stroke="#e07b39" stroke-dasharray="4 3"/><text x="250" y="130" font-size="9.5" fill="#e07b39">排烟管 Φ180</text>';
+    s+='<text x="200" y="200" font-size="10" fill="#4a5a6c" text-anchor="middle">烟机宽 900，风量 18–23；灶台 750，排烟管 Φ180</text>';
+    s+='</svg>';return s;},
+  water(){let s='<svg viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="20" y="20" width="360" height="220" fill="#f5f7fa" stroke="#dce2e8" stroke-width="1.5"/>';
+    s+='<rect x="40" y="60" width="64" height="44" fill="#dce5ee" stroke="#1e3a5f"/><text x="72" y="86" font-size="9.5" fill="#4a5a6c" text-anchor="middle">前置40μm</text>';
+    s+='<rect x="150" y="130" width="90" height="54" fill="#dce5ee" stroke="#1e3a5f"/><text x="195" y="162" font-size="9.5" fill="#4a5a6c" text-anchor="middle">末端RO 400–800G</text>';
+    s+='<rect x="300" y="60" width="50" height="70" fill="#eef3f8" stroke="#e07b39"/><text x="325" y="100" font-size="9" fill="#c0392b" text-anchor="middle">管线机</text>';
+    s+='<line x1="104" y1="82" x2="150" y2="150" stroke="#2f6fb0" stroke-dasharray="4 3"/><line x1="240" y1="157" x2="300" y2="95" stroke="#2f6fb0" stroke-dasharray="4 3"/>';
+    s+='<text x="200" y="218" font-size="9.5" fill="#4a5a6c" text-anchor="middle">厨下RO需电源+下水；前置旁留排污地漏；管线机留进水电源</text>';
+    s+='</svg>';return s;},
+  hvac(){let s='<svg viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg">';
+    s+='<rect x="20" y="20" width="360" height="220" fill="#f5f7fa" stroke="#dce2e8" stroke-width="1.5"/>';
+    s+='<rect x="40" y="46" width="320" height="26" fill="#dce5ee" stroke="#1e3a5f"/>';
+    s+='<rect x="70" y="72" width="150" height="30" fill="#eef3f8" stroke="#1e3a5f"/><text x="145" y="92" font-size="10" fill="#4a5a6c" text-anchor="middle">空调内机</text>';
+    s+='<rect x="250" y="48" width="56" height="56" fill="#fff" stroke="#e07b39" stroke-dasharray="3 3"/><text x="278" y="138" font-size="9.5" fill="#e07b39" text-anchor="middle">检修口400×400</text>';
+    s+='<line x1="220" y1="102" x2="320" y2="102" stroke="#1e3a5f" stroke-dasharray="3 3"/><text x="270" y="95" font-size="9" fill="#1e3a5f">风管Φ75/110</text>';
+    s+='<text x="200" y="170" font-size="10" fill="#4a5a6c" text-anchor="middle">送/回风口错位布置；冷凝水就近排；主机位电源+控制线</text>';
+    s+='<text x="200" y="218" font-size="10" fill="#4a5a6c" text-anchor="middle">新风主机设备间/阳台，梁上开孔需结构确认</text>';
+    s+='</svg>';return s;}
+};
+const REF_CAP={"outlet":"插座 / 开关距地净高示意（按家人身高微调）","cabinet":"橱柜高低台剖面（水槽 90 / 灶台 80cm）","toilet":"马桶坑距：墙到排污中心 305 或 400mm","wardrobe":"衣柜内部格局（柜深 55–60cm）","fridge":"冰箱预留两侧散热缝各 5–10cm","waterproof":"防水涂刷高度（淋浴 ≥180 / 其他 ≥30cm）","strongweak":"强弱电平行敷设，间距 ≥30cm 并交叉屏蔽","smart":"智能开关零火预留示意（零线 N 必留，弃用单火/凌动）","smartp":"全屋智能点位总览（电源 / 网口预留示意）","robot":"扫地机器人基站与门槛预留（直径/基站/出入）","oven":"蒸烤箱嵌入开孔 56×55 与散热/回路示意","ppr":"PPR 给水管冷热水与管径（左热右冷）","panel":"配电箱回路分配示意图","weakbox":"弱电箱设备布局（光猫/路由/电源）","door":"室内门洞尺寸（宽/高/墙厚）","curtain":"窗帘盒电机电源剖面（含智能镜/晾衣架）","sofa":"沙发尺寸与通道预留","bed":"床尺寸与床头过道","tv":"电视观看距离与挂墙高度","shower":"花洒/顶喷高度与混水阀","floor":"地漏位置与放坡示意","proj":"投影幕布与投距示意","ceiling":"吊顶龙骨间距（主骨/副骨）","washer":"滚筒洗衣机嵌入与上下水","hood":"烟机灶具嵌入与排烟管","water":"净水系统管路（前置/RO/管线机）","hvac":"中央空调/新风（内机/检修口/风管）"};
+const REF_OF={"开关插座高度速查":"outlet","整体橱柜":"cabinet","马桶":"toilet","衣柜":"wardrobe","冰箱":"fridge","柔性/刚性防水涂料":"waterproof","超六类网线":"strongweak","智能开关零火预留":"smart","全屋智能点位总览":"smartp","扫地机器人":"robot","蒸烤箱（嵌入式）":"oven","PPR 给水管":"ppr","配电箱及漏保空开":"panel","弱电箱与网络汇聚":"weakbox","室内门":"door","窗帘电机/智能镜/晾衣架电源":"curtain","沙发":"sofa","床 + 床垫":"bed","电视":"tv","花洒":"shower","地漏":"floor","投影 / 激光电视":"proj","轻钢龙骨 + 石膏板":"ceiling","滚筒洗衣机":"washer","烟机 + 灶具":"hood","净水器（前置+RO+管线机）":"water","中央空调 / 新风":"hvac"};
+function svgStyle(st){const id=st.en.replace(/\s/g,"");let s='<svg viewBox="0 0 380 118" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">';
+  s+='<defs><linearGradient id="g'+id+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+st.c1+'"/><stop offset="1" stop-color="'+st.c2+'"/></linearGradient></defs>';
+  s+='<rect width="380" height="118" fill="url(#g'+id+')"/>';
+  s+='<rect x="0" y="92" width="380" height="26" fill="rgba(0,0,0,0.16)"/>';
+  s+='<rect x="30" y="60" width="118" height="32" rx="6" fill="rgba(255,255,255,0.88)"/>';
+  s+='<rect x="30" y="48" width="118" height="14" rx="6" fill="rgba(255,255,255,0.55)"/>';
+  s+='<rect x="255" y="22" width="62" height="36" rx="4" fill="rgba(255,255,255,0.22)" stroke="rgba(255,255,255,0.65)"/>';
+  s+='<circle cx="288" cy="40" r="17" fill="rgba(255,255,255,0.9)"/>';
+  s+='<text x="190" y="76" font-size="15" fill="rgba(255,255,255,0.96)" text-anchor="middle" font-family="serif">'+st.name+'</text>';
+  s+='</svg>';return s;}
+
+/* ============== 渲染 ============== */
+const $=(s,el=document)=>el.querySelector(s);
+const $$=(s,el=document)=>[...el.querySelectorAll(s)];
+const menu=$("#menu"), content=$("#content");
+let allProducts=[];
+
+// 阶段菜单 + 总览卡片 + 阶段视图
+const stageMenuHtml=STAGES.map(s=>`<div class="mi" data-view="${s.id}"><span class="num">${s.num}</span><span class="ic">${s.icon}</span><label>${s.name}</label></div>`).join("");
+const flowGroup=$$('.mgroup',menu)[1];
+flowGroup.insertAdjacentHTML("afterend",stageMenuHtml);
+
+const stageCardsHtml=STAGES.map(s=>`<div class="scard" data-view="${s.id}"><div class="top"><div class="badge">${s.icon}</div><div><div class="no">STAGE ${s.num}</div><h3>${s.name}</h3></div></div><span class="tag">${s.tag}</span><span class="arrow">→</span></div>`).join("");
+$("#stageCards").innerHTML=stageCardsHtml;
+
+STAGES.forEach(s=>{
+  const tasks=s.tasks.map(t=>`<li>${t}</li>`).join("");
+  const pits=s.pitfalls.map(p=>`<li>${p}</li>`).join("");
+  const prods=s.products.map(p=>{
+    allProducts.push({stage:s.name,stageId:s.id,name:p.name,cat:p.cat,prod:p});
+    const rows=p.params.map(r=>`<tr><th>${r[0]}</th><td>${r[1]}</td></tr>`).join("");
+    const refKey=REF_OF[p.name];
+    const refHtml=refKey?`<div class="ref">${REF[refKey]()}<div class="cap">${REF_CAP[refKey]}</div></div>`:"";
+    return `<div class="prod" data-search="${(p.name+' '+p.cat+' '+p.note+' '+p.params.map(x=>x[0]+x[1]).join(' ')).toLowerCase()}">
+      <div class="ph"><span class="cat">${p.cat}</span><h4>${p.name}</h4></div>
+      <div class="note">${p.note}</div>${refHtml}<table class="param">${rows}</table></div>`;
+  }).join("");
+  const sec=document.createElement("section");
+  sec.className="view";sec.id="view-"+s.id;
+  sec.innerHTML=`<div class="vhead"><span class="num">${s.num}</span><h2>${s.name}</h2><span class="tag">${s.tag}</span></div>
+    <div class="vsum">${s.sum}</div>
+    <div class="cols">
+      <div class="panel"><h3><span class="dot"></span>本阶段要做什么</h3><ul class="lst">${tasks}</ul></div>
+      <div class="panel"><h3 class="warn"><span class="dot"></span>避坑 · 注意事项</h3><ul class="lst warn">${pits}</ul></div>
+    </div>
+    <div class="prod-wrap"><h3><span class="bar"></span>需订 / 买的产品与参数</h3><div class="prod-grid">${prods}</div></div>`;
+  content.appendChild(sec);
+});
+$("#statProd").textContent=allProducts.length;
+
+// 风格
+$("#styleGrid").innerHTML=STYLES.map(st=>`
+  <div class="style" data-search="${(st.name+' '+st.en+' '+st.desc+' '+st.materials.join(' ')+' '+st.elements.join(' ')+' '+st.suit).toLowerCase()}">
+    <div class="bar" style="--c1:${st.c1};--c2:${st.c2}"></div>
+    <div class="scene">${svgStyle(st)}</div>
+    <div class="body"><h4>${st.name}</h4><div class="en">${st.en}</div><p>${st.desc}</p>
+      <div class="row">${st.materials.map(m=>`<span class="chip">${m}</span>`).join("")}</div>
+      <div class="row">${st.elements.map(e=>`<span class="chip g">${e}</span>`).join("")}</div>
+      <div>适合：<b style="color:#4a5a6c">${st.suit}</b></div><div class="cost">造价区间：${st.cost}</div>
+    </div></div>`).join("");
+
+// 索引
+const idxBody=$("#idxBody"), idxFilter=$("#idxFilter");
+idxFilter.innerHTML='<option value="">全部阶段</option>'+STAGES.map(s=>`<option value="${s.name}">${s.name}</option>`).join("");
+function renderIdx(filterStage="",q=""){
+  const rows=allProducts.filter(p=>!filterStage||p.stage===filterStage)
+    .filter(p=>{if(!q)return true;const key=p.prod.params.map(r=>r[0]+r[1]).join(' ');return (p.stage+p.name+p.cat+key).toLowerCase().includes(q);})
+    .map(p=>{const key=p.prod.params.slice(0,3).map(r=>`${r[0]} ${r[1]}`).join("；");
+      return `<tr data-name="${p.name}"><td>${p.stage}</td><td>${p.name}</td><td><span class="pill">${p.cat}</span></td><td>${key}</td></tr>`;}).join("");
+  idxBody.innerHTML=rows||"";
+  $("#idxEmpty").style.display=rows?"none":"block";
+}
+renderIdx();
+idxBody.addEventListener("click",e=>{const tr=e.target.closest("tr");if(tr&&tr.dataset.name)switchView(STAGES.find(s=>s.name===tr.children[0].textContent).id);});
+idxFilter.addEventListener("change",()=>renderIdx(idxFilter.value,searchBox.value.trim().toLowerCase()));
+
+// 索引排序
+let sortKey=null,sortDir=1;
+$$("table.idx th").forEach(th=>{th.addEventListener("click",()=>{
+  const k=th.dataset.k;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=1;}
+  const idx={stage:0,name:1,cat:2,key:3};
+  const rows=[...idxBody.querySelectorAll("tr")];
+  rows.sort((a,b)=>a.children[idx[k]].textContent.localeCompare(b.children[idx[k]].textContent,"zh")*sortDir);
+  rows.forEach(r=>idxBody.appendChild(r));
+});});
+
+/* ============== 视图切换 ============== */
+const crumbIcon=$("#crumbIcon"), crumbTitle=$("#crumbTitle");
+const titles={overview:["🏠","总览看板"],index:["⚑","产品参数速查"],styles:["❖","装修风格库"],search:["⌕","搜索结果"]};
+STAGES.forEach(s=>titles[s.id]=[s.icon,s.name]);
+let lastView="overview";
+function switchView(v){
+  $$(".view").forEach(el=>el.classList.remove("active"));
+  const t=$("#view-"+v); if(t)t.classList.add("active");
+  $$(".mi").forEach(m=>m.classList.toggle("active",m.dataset.view===v));
+  const tt=titles[v]||["",""]; crumbIcon.textContent=tt[0]; crumbTitle.textContent=tt[1];
+  if(v!=="search") lastView=v;
+  $("#content").scrollTop=0;
+}
+
+// 菜单/卡片点击
+$$(".mi, .scard").forEach(el=>el.addEventListener("click",()=>switchView(el.dataset.view)));
+
+// 折叠
+$("#collapseBtn").addEventListener("click",()=>{
+  const sb=$("#sidebar"); sb.classList.toggle("collapsed");
+  $("#collapseBtn").textContent=sb.classList.contains("collapsed")?"›":"‹";
+});
+
+// 移动端抽屉开关（窄屏下侧边菜单改为可关闭浮层，避免遮挡正文）
+const menuToggle=$("#menuToggle"), backdrop=$("#backdrop"), sidebarEl=$("#sidebar");
+function openDrawer(){sidebarEl.classList.add("open");backdrop.classList.add("show");}
+function closeDrawer(){sidebarEl.classList.remove("open");backdrop.classList.remove("show");}
+menuToggle.addEventListener("click",()=>{sidebarEl.classList.contains("open")?closeDrawer():openDrawer();});
+backdrop.addEventListener("click",closeDrawer);
+$$(".mi").forEach(el=>el.addEventListener("click",()=>{if(window.innerWidth<=760)closeDrawer();}));
+window.addEventListener("resize",()=>{if(window.innerWidth>760)closeDrawer();});
+
+/* ============== 搜索 ============== */
+const searchBox=$("#searchBox");
+function doSearch(q){
+  q=q.trim().toLowerCase();
+  if(!q){ if($("#view-search").classList.contains("active")) switchView(lastView); return; }
+  $$(".view").forEach(el=>el.classList.remove("active"));
+  $("#view-search").classList.add("active");
+  $$(".mi").forEach(m=>m.classList.remove("active"));
+  const tt=titles.search; crumbIcon.textContent=tt[0]; crumbTitle.textContent=tt[1];
+  const prodRes=allProducts.filter(p=>{const key=p.prod.params.map(r=>r[0]+r[1]).join(' ');return (p.name+p.cat+p.note+key+p.stage).toLowerCase().includes(q);})
+    .map(p=>({stage:p.stage,id:p.stageId,name:p.name,cat:p.cat,key:p.prod.params.slice(0,2).map(r=>`${r[0]}:${r[1]}`).join("；")}));
+  const styleRes=STYLES.filter(st=>(st.name+st.desc+st.materials.join('')+st.elements.join('')+st.suit).toLowerCase().includes(q))
+    .map(st=>({stage:"风格库",id:"styles",name:st.name,cat:"风格",key:st.cost}));
+  const total=prodRes.length+styleRes.length;
+  $("#resCount").textContent=total+" 项";
+  $("#resHead").innerHTML=`关键词 <b>“${q}”</b> 命中 <b>${total}</b> 项 · 点任意卡片直达`;
+  const mk=(r)=>`<div class="res" data-view="${r.id}"><div class="meta">${r.stage} · ${r.cat}</div><h4>${r.name}</h4><div class="kk">${r.key}</div></div>`;
+  $("#resGrid").innerHTML=prodRes.map(mk).concat(styleRes.map(mk)).join("")||`<div class="idx-empty">未找到匹配项，换个关键词。</div>`;
+  $$("#resGrid .res").forEach(el=>el.addEventListener("click",()=>switchView(el.dataset.view)));
+  $("#content").scrollTop=0;
+}
+let st;
+searchBox.addEventListener("input",()=>{clearTimeout(st);st=setTimeout(()=>doSearch(searchBox.value),120);});
+</script>
+</body>
+</html>
