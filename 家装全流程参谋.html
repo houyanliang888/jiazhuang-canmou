@@ -157,7 +157,7 @@
   /* ===== 索引 ===== */
   .idx-tools{display:flex;gap:10px;margin-bottom:14px;align-items:center;}
   .idx-tools select{padding:7px 12px;border:1px solid var(--line);border-radius:9px;background:#fff;font-size:13px;color:var(--ink);}
-  .idx-wrap{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
+  .idx-wrap{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);overflow-x:auto;-webkit-overflow-scrolling:touch;box-shadow:var(--shadow);}
   table.idx{width:100%;border-collapse:collapse;font-size:13.5px;}
   table.idx th,table.idx td{padding:11px 16px;text-align:left;border-bottom:1px solid var(--line);}
   table.idx th{background:#eaf0f6;color:var(--muted);font-weight:600;cursor:pointer;position:sticky;top:0;user-select:none;}
@@ -165,7 +165,7 @@
   table.idx tr{cursor:pointer;}
   table.idx tr:hover td{background:#f8fafc;}
   .idx-empty{padding:40px;text-align:center;color:var(--muted);}
-  .pill{font-size:11px;background:#e6ecf3;color:#5f6b78;padding:2px 9px;border-radius:999px;}
+  .pill{font-size:11px;background:#e6ecf3;color:#5f6b78;padding:2px 9px;border-radius:999px;white-space:nowrap;display:inline-block;}
 
   /* ===== 搜索结果 ===== */
   .res-head{font-size:14px;color:var(--muted);margin-bottom:16px;}
@@ -226,6 +226,10 @@
     .search{width:130px;}
     .topbar .printhint{display:none;}
     .content{padding:22px 16px 50px;}
+    /* 速查表：横向滚动保持列宽，禁止竖排叠字 */
+    table.idx{min-width:680px;}
+    table.idx th{white-space:nowrap;}
+    table.idx td:first-child,table.idx td:nth-child(3){white-space:nowrap;}
   }
   @media print{.sidebar,.topbar,.ov-hero::after,#cover,.back-btn{display:none!important;}body{overflow:auto;}.view{display:block!important;animation:none;}#view-overview,#view-index,#view-styles{display:none!important;}}
 </style>
@@ -288,7 +292,7 @@
       <!-- 索引 -->
       <section class="view" id="view-index">
         <div class="vhead"><span class="num">⚑</span><h2>产品参数速查</h2><span class="tag">全本索引</span></div>
-        <div class="vsum">点表头排序；下拉可按阶段筛选；配合顶部搜索框即时过滤。每行可点，直达对应阶段。</div>
+        <div class="vsum">点表头排序；下拉可按阶段筛选；配合顶部搜索框即时过滤。每行可点，直达对应阶段。手机上左右滑动可查看完整参数。</div>
         <div class="idx-tools">
           <select id="idxFilter"><option value="">全部阶段</option></select>
         </div>
