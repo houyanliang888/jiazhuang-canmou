@@ -763,7 +763,7 @@ $("#statProd").textContent=allProducts.length;
 $("#styleGrid").innerHTML=STYLES.map(st=>`
   <div class="style" data-search="${(st.name+' '+st.en+' '+st.desc+' '+st.materials.join(' ')+' '+st.elements.join(' ')+' '+st.suit).toLowerCase()}">
     <div class="bar" style="--c1:${st.c1};--c2:${st.c2}"></div>
-    <div class="scene">${(STYLE_PHOTOS[st.name]&&STYLE_PHOTOS[st.name].length)?`<div class="photo-strip">${STYLE_PHOTOS[st.name].map(s=>`<img loading="lazy" src="${s}" alt="实景参考">`).join("")}</div><div class="ph-cap">实景参考 · 左右滑动查看</div>`:svgStyle(st)}</div>
+    ${(STYLE_PHOTOS[st.name]&&STYLE_PHOTOS[st.name].length)?`<div class="photo-strip">${STYLE_PHOTOS[st.name].map(s=>`<img loading="lazy" src="${s}" alt="实景参考">`).join("")}</div><div class="ph-cap">实景参考 · 左右滑动查看</div>`:`<div class="scene">${svgStyle(st)}</div>`}
     <div class="body"><h4>${st.name}</h4><div class="en">${st.en}</div><p>${st.desc}</p>
       <div class="row">${st.materials.map(m=>`<span class="chip">${m}</span>`).join("")}</div>
       <div class="row">${st.elements.map(e=>`<span class="chip g">${e}</span>`).join("")}</div>
