@@ -181,6 +181,38 @@
   .menu-toggle{display:none;align-items:center;justify-content:center;width:40px;height:40px;flex:0 0 40px;border:none;background:rgba(224,123,57,.14);border-radius:10px;cursor:pointer;font-size:18px;color:var(--ink);}
   .menu-toggle:hover{background:rgba(224,123,57,.26);}
   .backdrop{display:none;position:fixed;inset:0;background:rgba(16,32,48,.42);z-index:55;}
+
+  /* 顶栏返回键 */
+  .back-btn{display:none;align-items:center;justify-content:center;width:36px;height:36px;flex:0 0 36px;
+    border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--accent2);font-size:22px;
+    line-height:1;cursor:pointer;padding:0 0 3px;}
+  .back-btn:hover{border-color:var(--accent-soft);color:var(--accent);background:#fdf6f0;}
+
+  /* 进入封面 */
+  #cover{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:linear-gradient(165deg,#122a42 0%,#1e3a5f 52%,#2a5078 100%);color:#fff;text-align:center;cursor:pointer;
+    transition:opacity .55s ease,visibility .55s;}
+  #cover.hide{opacity:0;visibility:hidden;pointer-events:none;}
+  .cov-glow{position:absolute;width:820px;height:820px;border-radius:50%;pointer-events:none;top:-180px;right:-200px;
+    background:radial-gradient(circle,rgba(224,123,57,.3),transparent 62%);animation:glowPulse 5s ease-in-out infinite;}
+  @keyframes glowPulse{0%,100%{opacity:.85;transform:scale(1);}50%{opacity:1;transform:scale(1.08);}}
+  .cov-totem{width:118px;height:auto;filter:drop-shadow(0 10px 30px rgba(224,123,57,.5));animation:covIn 1s cubic-bezier(.2,.7,.2,1) both .15s;}
+  .cov-kicker{margin-top:26px;font-size:15px;letter-spacing:6px;color:rgba(255,255,255,.65);animation:covIn .8s ease both .4s;}
+  .cov-title{font-family:"SimSun","STSong","Noto Serif SC",serif;font-size:56px;font-weight:900;letter-spacing:6px;margin-top:10px;animation:covIn .8s ease both .55s;}
+  .cov-title em{font-style:normal;color:#f0904f;}
+  .cov-sub{font-size:18px;letter-spacing:4px;color:rgba(255,255,255,.8);margin-top:14px;animation:covIn .8s ease both .7s;}
+  .cov-stats{display:flex;gap:44px;margin-top:34px;animation:covIn .8s ease both .85s;}
+  .cov-stats span{font-size:14.5px;color:rgba(255,255,255,.75);letter-spacing:2px;}
+  .cov-stats b{color:#f0904f;font-size:26px;font-weight:900;margin-right:4px;font-family:Georgia,serif;}
+  #enterBtn{margin-top:52px;border:none;cursor:pointer;background:linear-gradient(135deg,#e8823f,#d96f2c);color:#fff;
+    font-size:19px;font-weight:800;letter-spacing:8px;padding:16px 62px;border-radius:999px;
+    animation:covIn .8s ease both 1s,pulse 2.4s ease-out 1.8s infinite;transition:transform .15s;}
+  #enterBtn:active{transform:scale(.96);}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(224,123,57,.5);}70%{box-shadow:0 0 0 22px rgba(224,123,57,0);}100%{box-shadow:0 0 0 0 rgba(224,123,57,0);}}
+  .cov-foot{position:absolute;bottom:44px;left:0;right:0;font-size:13px;letter-spacing:3px;color:rgba(255,255,255,.45);animation:covIn 1s ease both 1.2s;}
+  @keyframes covIn{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:none;}}
+  @media(prefers-reduced-motion:reduce){#cover *{animation:none!important;}}
+
   @media(max-width:1080px){.stats{grid-template-columns:repeat(2,1fr);}.stage-cards{grid-template-columns:repeat(2,1fr);}.cols,.prod-grid,.style-grid,.res-grid{grid-template-columns:1fr;}}
   @media(max-width:760px){
     .app{height:100vh;height:100dvh;}
@@ -188,12 +220,14 @@
     .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:60;height:100%;transform:translateX(-100%);transition:transform .25s ease;box-shadow:0 0 40px rgba(22,39,59,.28);}
     .sidebar.open{transform:translateX(0);}
     .backdrop.show{display:block;}
-    .topbar{height:56px;flex:0 0 56px;padding:0 14px;gap:12px;}
-    .search{width:150px;}
+    .topbar{height:56px;flex:0 0 56px;padding:0 14px;gap:10px;}
+    .crumb{min-width:0;flex:1;overflow:hidden;white-space:nowrap;}
+    .crumb b{overflow:hidden;text-overflow:ellipsis;}
+    .search{width:130px;}
     .topbar .printhint{display:none;}
     .content{padding:22px 16px 50px;}
   }
-  @media print{.sidebar,.topbar,.ov-hero::after{display:none!important;}body{overflow:auto;}.view{display:block!important;animation:none;}#view-overview,#view-index,#view-styles{display:none!important;}}
+  @media print{.sidebar,.topbar,.ov-hero::after,#cover,.back-btn{display:none!important;}body{overflow:auto;}.view{display:block!important;animation:none;}#view-overview,#view-index,#view-styles{display:none!important;}}
 </style>
 </head>
 <body>
@@ -223,6 +257,7 @@
   <div class="main">
     <div class="topbar">
       <button class="menu-toggle" id="menuToggle" aria-label="打开菜单">☰</button>
+      <button class="back-btn" id="backBtn" aria-label="返回上一页">‹</button>
       <div class="crumb"><span id="crumbIcon">🏠</span><b id="crumbTitle">总览看板</b></div>
       <div class="search">
         <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1114 9.5 4.5 4.5 0 019.5 14z"/></svg>
@@ -283,6 +318,18 @@
   </div>
 </div>
 <div class="backdrop" id="backdrop"></div>
+
+<!-- 进入封面 -->
+<div id="cover">
+  <div class="cov-glow"></div>
+  <img id="covTotem" class="cov-totem" alt="侯哥智改">
+  <div class="cov-kicker">侯哥智改 · 装修避坑参谋</div>
+  <h1 class="cov-title">家装<em>全流程</em>参谋</h1>
+  <div class="cov-sub">从拆改到入住 · 一次讲清</div>
+  <div class="cov-stats"><span><b>9</b> 大阶段</span><span><b>65</b> 项参数</span><span><b>27</b> 张尺寸图</span></div>
+  <button id="enterBtn">进入手册</button>
+  <div class="cov-foot">离线可用 · 可打印 · 山西长治</div>
+</div>
 
 <script>
 /* ============== 数据 ============== */
@@ -741,15 +788,60 @@ $$("table.idx th").forEach(th=>{th.addEventListener("click",()=>{
 const crumbIcon=$("#crumbIcon"), crumbTitle=$("#crumbTitle");
 const titles={overview:["🏠","总览看板"],index:["⚑","产品参数速查"],styles:["❖","装修风格库"],search:["⌕","搜索结果"]};
 STAGES.forEach(s=>titles[s.id]=[s.icon,s.name]);
-let lastView="overview";
-function switchView(v){
+let lastView="overview", curView="overview";
+let entered=false;            // 是否已通过封面进入
+let navDepth=0, expectedHash=null;  // 内部导航深度（>0 时返回键不会退出页面）
+
+function updateBackBtn(){
+  $("#backBtn").style.display=(entered && navDepth>0)?"flex":"none";
+}
+function applyView(v){
   $$(".view").forEach(el=>el.classList.remove("active"));
   const t=$("#view-"+v); if(t)t.classList.add("active");
   $$(".mi").forEach(m=>m.classList.toggle("active",m.dataset.view===v));
   const tt=titles[v]||["",""]; crumbIcon.textContent=tt[0]; crumbTitle.textContent=tt[1];
   if(v!=="search") lastView=v;
+  curView=v;
   $("#content").scrollTop=0;
+  updateBackBtn();
 }
+function switchView(v){   // 带浏览器历史的跳转：系统返回键/微信侧滑会在手册内逐级后退，而不是直接退出
+  if(v==="search"){applyView("search");return;}
+  const target="#"+v;
+  if(target===location.hash){applyView(v);return;}
+  navDepth++; expectedHash=target;
+  location.hash=v;
+}
+window.addEventListener("hashchange",()=>{
+  const h=location.hash;
+  if(h!==expectedHash){navDepth=Math.max(0,navDepth-1);expectedHash=h;}  // 用户按了系统返回/前进
+  const v=decodeURIComponent(h.replace(/^#/,""));
+  if(!v){showCover();return;}   // 退到最初入口 → 回到封面
+  applyView(v);
+});
+
+/* ============== 进入封面 ============== */
+const cover=$("#cover"), backBtn=$("#backBtn");
+let covTimer=null;
+(function(){const s=document.querySelector(".logo img");if(s)$("#covTotem").src=s.src;})();
+function showCover(){
+  clearTimeout(covTimer);
+  cover.style.display="flex"; void cover.offsetHeight;
+  cover.classList.remove("hide");
+  entered=false; updateBackBtn();
+}
+function hideCover(){
+  cover.classList.add("hide");
+  covTimer=setTimeout(()=>cover.style.display="none",620);
+  entered=true; updateBackBtn();
+}
+$("#enterBtn").addEventListener("click",e=>{
+  e.stopPropagation();
+  hideCover();
+  switchView(decodeURIComponent(location.hash.replace(/^#/,""))||"overview");
+});
+cover.addEventListener("click",()=>{if(!entered)$("#enterBtn").click();});
+backBtn.addEventListener("click",()=>{if(navDepth>0)history.back();else switchView("overview");});
 
 // 菜单/卡片点击
 $$(".mi, .scard").forEach(el=>el.addEventListener("click",()=>switchView(el.dataset.view)));
