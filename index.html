@@ -235,6 +235,10 @@
   .photo-strip img{width:76%;flex:0 0 76%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;scroll-snap-align:start;background:#eef2f7;}
   .ph-cap{font-size:11px;color:var(--muted);margin-top:7px;letter-spacing:.5px;}
   @media print{.sidebar,.topbar,.ov-hero::after,#cover,.back-btn{display:none!important;}body{overflow:auto;}.view{display:block!important;animation:none;}#view-overview,#view-index,#view-styles{display:none!important;}}
+.gallery-entrance{display:flex;align-items:center;gap:9px;margin:12px 14px 4px;padding:11px 13px;border-radius:13px;background:linear-gradient(135deg,#16243f,#243a63);color:#fff;text-decoration:none;font-size:14px;font-weight:600;box-shadow:0 3px 10px rgba(22,36,63,.28);transition:filter .15s}
+.gallery-entrance:hover{filter:brightness(1.12)}
+.gallery-entrance .ic{font-size:19px;line-height:1}
+.gallery-entrance .sub{display:block;font-size:11px;font-weight:400;opacity:.78;margin-top:2px}
 </style>
 <link rel="manifest" href="app.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -260,6 +264,10 @@
       <div class="mi" data-view="index"><span class="ic">⚑</span><label>产品参数速查</label></div>
       <div class="mi" data-view="styles"><span class="ic">❖</span><label>装修风格库</label></div>
     </nav>
+    <a class="gallery-entrance" href="https://houyanliang888.github.io/jiazhuang-canmou/%E5%AE%B6%E8%A3%85%E9%A3%8E%E6%A0%BC%E5%9B%BE%E5%BA%93.html" target="_blank" rel="noopener">
+      <span class="ic">🖼️</span>
+      <span>实景图库<span class="sub">老钱风等风格实景 · 新开页</span></span>
+    </a>
     <div class="side-foot">
       <button class="collapse-btn" id="collapseBtn" title="收起菜单">‹</button>
       <span>离线可用 · 可打印</span>
