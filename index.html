@@ -236,6 +236,12 @@
   .ph-cap{font-size:11px;color:var(--muted);margin-top:7px;letter-spacing:.5px;}
   @media print{.sidebar,.topbar,.ov-hero::after,#cover,.back-btn{display:none!important;}body{overflow:auto;}.view{display:block!important;animation:none;}#view-overview,#view-index,#view-styles{display:none!important;}}
 </style>
+<link rel="manifest" href="app.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#16203a">
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js').catch(function(){});});}</script>
 </head>
 <body>
 <div class="app">

@@ -1,0 +1,15 @@
+{
+  "name":"家装全流程参谋",
+  "short_name":"家装参谋",
+  "description":"侯哥智改 · 菜单式装修交互手册，可离线安装到手机桌面。",
+  "start_url":"./",
+  "scope":"./",
+  "display":"standalone",
+  "orientation":"portrait",
+  "background_color":"#16203a",
+  "theme_color":"#16203a",
+  "icons":[
+    {"src":"icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  ]
+}
