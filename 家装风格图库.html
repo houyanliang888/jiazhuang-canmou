@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>家装风格图库 · 侯哥智改</title>
+<link rel="manifest" href="gallery.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{--navy:#16243f;--navy2:#22365c;--orange:#e8772e;--paper:#f7f5f1;--line:#e6e0d6;--ink:#2b2b2b;--mut:#7a7468}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -264,6 +267,9 @@ document.addEventListener("keydown",e=>{
 });
 
 renderCatTabs();renderCard();renderGrid();
+</script>
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{});});}
 </script>
 </body>
 </html>
